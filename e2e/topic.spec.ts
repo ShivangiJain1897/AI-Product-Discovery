@@ -27,6 +27,8 @@ test.describe.serial("idea → choose several things → work over time", () => 
   });
 
   test("adaptive questions, a first draft, and edits that are never overwritten", async ({ page }) => {
+    page.on("response", async (r) => { if (r.url().includes("/api/command")) console.log("CMD", r.status(), (r.request().postData() ?? "").slice(0, 100), (await r.text().catch(() => "")).slice(0, 160)); });
+    page.on("console", (m) => { if (m.type() === "error") console.log("CONSOLE", m.text().slice(0, 200)); });
     await page.goto(topicUrl);
     await page.getByRole("link", { name: /^Competitor scan/ }).click();
     await page.waitForLoadState("networkidle");
