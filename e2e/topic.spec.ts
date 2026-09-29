@@ -41,7 +41,7 @@ test.describe.serial("idea → choose several things → work over time", () => 
     await page.getByRole("button", { name: "Edit" }).nth(1).click();     // differentiators is empty → "Write"; edit gaps
     await page.getByRole("button", { name: "Cancel" }).click();
     await page.getByRole("button", { name: "Write" }).first().click();
-    await page.getByLabel("Where we could differ").fill("Local support in every time zone");
+    await page.getByRole("textbox", { name: "Where we could differ" }).fill("Local support in every time zone");
     await page.getByRole("button", { name: "Save", exact: true }).click();
     await expect(page.getByText("Edited by you")).toBeVisible();
     await page.getByRole("button", { name: "Regenerate draft" }).click();
