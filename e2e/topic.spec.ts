@@ -21,7 +21,7 @@ test.describe.serial("idea → choose several things → work over time", () => 
     await expect(page.getByText("Better later").first()).toBeVisible();
     await page.getByRole("button", { name: /Plan my work \(4\)/ }).click();
     await expect(page.getByRole("heading", { name: "Your work" })).toBeVisible();
-    for (const t of ["User research plan", "Questionnaire / interview guide", "Market analysis", "Competitor scan"]) await expect(page.getByRole("link", { name: new RegExp(t) })).toBeVisible();
+    for (const t of ["User research plan", "Questionnaire / interview guide", "Market analysis", "Competitor scan"]) await expect(page.getByRole("link", { name: new RegExp("^" + t) })).toBeVisible();
     await expect(page.getByText("Not started").first()).toBeVisible();
     topicUrl = new URL(page.url()).pathname;
   });

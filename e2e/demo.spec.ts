@@ -77,7 +77,8 @@ test.describe.serial("demo examples, products, analysis, process (Slices 3–5)"
   test("event-log import wizard validates malformed data honestly", async ({ page }) => {
     await page.goto("/");
     await page.getByRole("link", { name: "Client Onboarding Service" }).first().click();
-    await page.getByRole("link", { name: "Knowledge" }).first().click();
+    await page.getByRole("link", { name: "Knowledge", exact: true }).first().click();
+    await expect(page.getByRole("heading", { name: /Knowledge · Evidence/ })).toBeVisible();
     await page.getByRole("button", { name: "Add evidence" }).first().click();
     await page.getByRole("tab", { name: "Upload a file" }).click();
     const csv = ["case,event,when,who", "1,Start,2025-01-01 09:00,A", "1,Start,2025-01-01 09:00,A", "1,Review,2025-01-02 09:00,B", "2,Start,garbage,A", "2,Review,2025-01-03 09:00,B", "2,Done,2025-01-04 09:00,B", "3,Start,2025-01-05 09:00,A", ",Done,2025-01-06,A"].join("\n");
