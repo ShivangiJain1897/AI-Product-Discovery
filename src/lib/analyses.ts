@@ -6,6 +6,7 @@ import { ANALYSIS_TYPES } from "./types";
 import { analyze, parseCsv, validate, fmtDuration, type Mapping, type Options, type Analysis as ELAnalysis, type Validation } from "./eventlog";
 import { computeScore, productDims } from "./priority";
 import { loadMap, diffMaps, handoffCount, activityCount } from "./process";
+import { TEMPLATES, emptySections } from "./templates";
 
 export type Summary = { label: string; value: string };
 export type RunResults = {
@@ -24,6 +25,7 @@ export type AnalysisRow = {
 export type RunRow = { id: string; analysis_id: string; seq: number; mode: string; inputs: string; results: string; created_at: string };
 
 export function initialData(type: string): Record<string, unknown> {
+  if (TEMPLATES[type]) return { answers: {}, sections: emptySections(TEMPLATES[type]), prov: {}, pending: {}, useRecords: true };
   switch (type) {
     case "problem_analysis": return { problem: "", context: "", symptoms: "", causes: [], alternatives: "" };
     case "solution_comparison": return { criteria: [{ key: "value", label: "User value" }, { key: "effort", label: "Effort to build and run" }, { key: "risk", label: "Risk / reversibility" }], conceptIds: [], ratings: {} };
@@ -46,7 +48,7 @@ export function createAnalysis(productId: string, d: {
   tx(() => {
     run(`INSERT INTO analyses (id, product_id, initiative_id, type, title, question, scope, config, data, status, created_at, updated_at)
          VALUES (?,?,?,?,?,?,?,?,?,'draft',?,?)`,
-      id, productId, d.initiativeId ?? null, d.type, d.title.trim(), d.question?.trim() ?? "", d.scope ?? "selected", j(d.config ?? {}), j(initialData(d.type)), ts, ts);
+      id, productId, d.initiativeId ?? null, d.type, d.title.trim(), d.question?.trim() ?? "", TEMPLATES[d.type] ? "selected" : (d.scope ?? "selected"), j(d.config ?? {}), j(initialData(d.type)), ts, ts);
     for (const s of d.sourceIds ?? []) { assertInProduct(productId, "source", s); run("INSERT OR IGNORE INTO analysis_sources (analysis_id, source_id, added_at) VALUES (?,?,?)", id, s, ts); }
     if (d.from) link(productId, ["analysis", id], [d.from.type, d.from.id], "started_from");
     saveRevision(id, "Created");
@@ -314,7 +316,7 @@ export function analysisFreshness(a: AnalysisRow): { outdated: boolean; reasons:
     if (!c || c.deleted_at) reasons.push(`“${trunc(s.title, 40)}” was removed since run ${last.seq}.`);
     else if (c.version !== s.version) reasons.push(`“${trunc(s.title, 40)}” changed (v${s.version} → v${c.version}) since run ${last.seq}.`);
   }
-  if (["research_synthesis", "custom", "event_log"].includes(a.type) && a.type !== "event_log") {
+  if (["research_synthesis", "custom"].includes(a.type) || (TEMPLATES[a.type]?.usesSources !== "none" && TEMPLATES[a.type])) {
     const nowIds = analysisSourceIds(a);
     const ran = new Set((inp.sources ?? []).map((s) => s.id));
     const added = nowIds.filter((id) => !ran.has(id));
@@ -334,6 +336,14 @@ export function analysisFreshness(a: AnalysisRow): { outdated: boolean; reasons:
   if (a.type === "assumption_analysis") {
     const ch = get<{ n: number }>("SELECT COUNT(*) n FROM assumptions WHERE product_id=? AND updated_at>? AND deleted_at IS NULL", a.product_id, last.created_at)!.n;
     if (ch) reasons.push(`${ch} assumption${ch === 1 ? "" : "s"} changed since run ${last.seq}.`);
+  }
+  if (TEMPLATES[a.type]?.usesRecords) {
+    const scope = a.initiative_id ? "initiative_id=?" : "1=1";
+    const p: unknown[] = a.initiative_id ? [a.product_id, last.created_at, a.initiative_id] : [a.product_id, last.created_at];
+    const n = (table: string) => get<{ n: number }>(`SELECT COUNT(*) n FROM ${table} WHERE product_id=? AND updated_at>? AND ${scope} AND deleted_at IS NULL`, ...p)!.n;
+    const parts = ([["finding", "findings"], ["opportunity", "opportunities"], ["solution concept", "solution_concepts"], ["assumption", "assumptions"], ["decision", "decisions"]] as const)
+      .map(([l, t]) => [l, n(t)] as const).filter(([, c]) => c > 0);
+    if (parts.length) reasons.push(`Records this draws on changed since run ${last.seq}: ${parts.map(([l, c]) => `${c} ${l}${c === 1 ? "" : "s"}`).join(", ")}.`);
   }
   if (a.type === "future_state" && ex?.mapId) {
     const m = get<{ updated_at: string }>("SELECT updated_at FROM process_maps WHERE id=?", ex.mapId);

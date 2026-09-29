@@ -17,19 +17,24 @@ test.describe.serial("core discovery journey (Slice 1 & 2)", () => {
   let base = "";
   test("question → plan → evidence → supported finding → opportunity → experiment → decision → brief", async ({ page }) => {
     await page.goto("/");
-    await expect(page.getByRole("heading", { name: "What are you trying to understand?" })).toBeVisible();
-    await expect(page.getByText("AI: demo mode")).toBeVisible();
-    // first use: a product needs only a name
+    await expect(page.getByRole("heading", { name: "What are you working on?" })).toBeVisible();
+    await expect(page.getByText(/AI: demo mode/)).toBeVisible();
+    // first use: a product needs only a name; start from a problem in one sentence
     await page.getByLabel("In product").selectOption("__new");
     await page.getByLabel("Product name").fill("Client Portal");
-    await page.getByLabel("Discovery question").fill("Why do clients wait so long?");
-    await page.getByRole("button", { name: /Start with a question/ }).click();
-    await expect(page.getByRole("heading", { name: "Start with a question" })).toBeVisible();
-    await page.getByRole("button", { name: /Create and draft a plan/ }).click();
-    // overview: refined question is a proposal, original kept
-    await expect(page.getByRole("heading", { name: "Discovery plan" })).toBeVisible();
-    await expect(page.getByText("Template draft (demo mode)")).toBeVisible();
-    await expect(page.getByText("Suggested next action")).toBeVisible();
+    await page.getByRole("radio", { name: "Problem" }).click();
+    await page.getByLabel("Describe what you’re working on").fill("Why do clients wait so long?");
+    await page.getByRole("button", { name: /Continue/ }).click();
+    // choose several things to do, then plan
+    await expect(page.getByRole("heading", { name: "What do you want to do?" })).toBeVisible();
+    await page.getByRole("checkbox", { name: /Questionnaire/ }).click();
+    await page.getByRole("checkbox", { name: /Root-cause analysis/ }).click();
+    await expect(page.getByText("2 selected")).toBeVisible();
+    await page.getByRole("button", { name: /Plan my work/ }).click();
+    await expect(page.getByRole("heading", { name: "Your work" })).toBeVisible();
+    await expect(page.getByText("Questionnaire / interview guide").first()).toBeVisible();
+    await expect(page.getByText("Root-cause analysis").first()).toBeVisible();
+    await expect(page.getByText("What now?")).toBeVisible();
     base = new URL(page.url()).pathname;
     await expect(page.getByText("Why do clients wait so long?").first()).toBeVisible();
 

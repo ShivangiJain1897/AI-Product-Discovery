@@ -9,6 +9,15 @@ import { EventLogResults, SynthesisResults, TableResults } from "@/components/re
 import { DeleteAnalysis } from "@/components/delete-analysis";
 import { entityHref } from "@/lib/routes";
 import { Empty } from "@/components/ui";
+import { TEMPLATES, intakeStatus, liteOf } from "@/lib/templates";
+import { buildDocCtx, readDocData } from "@/lib/docs";
+import { labelOf } from "@/lib/entities";
+import { CATALOG_BY_KEY, NEXT } from "@/lib/catalog";
+import { productKnowledge } from "@/lib/knowledge";
+import { aiMode } from "@/lib/ai/live";
+import { DocWorkbench } from "@/components/doc-workbench";
+import { AnalysisHeaderLite } from "@/components/analysis";
+import { AddEvidence } from "@/components/records";
 
 export const dynamic = "force-dynamic";
 
@@ -30,6 +39,33 @@ export default async function AnalysisPage({ params, searchParams }: { params: P
   const iniCount = a.initiative_id ? get<any>("SELECT COUNT(*) n FROM initiative_sources WHERE initiative_id=?", a.initiative_id)!.n : 0;
   const scopedIds = analysisSourceIds(a as any);
 
+  const tpl = TEMPLATES[a.type];
+  if (tpl) {
+    const dd = readDocData(a);
+    const ctx = buildDocCtx(pid, a);
+    const refs: Record<string, { label: string; href: string }> = {};
+    const scan = (v: unknown) => { const str = JSON.stringify(v ?? ""); for (const m of str.matchAll(/\[\[([a-z_]+):([A-Za-z0-9_]+)\]\]/g)) { const l = labelOf(m[1] as any, m[2]); if (l && !l.deleted) refs[`${m[1]}:${m[2]}`] = { label: l.label, href: entityHref(pid, m[1], m[2], a.initiative_id) }; } };
+    scan(dd.sections);
+    const lastRun = runs[0];
+    const cat = CATALOG_BY_KEY[a.type];
+    const initiative = a.initiative_id ? initiatives.find((i) => i.id === a.initiative_id) ?? null : null;
+    return (
+      <div className="mx-auto max-w-5xl px-6 py-6">
+        <AnalysisHeaderLite pid={pid} a={a as any} icon={cat?.icon ?? "file"} initiative={initiative} />
+        {fresh.outdated && <div role="status" className="mb-4 rounded-xl border border-warn/30 bg-warn-soft px-4 py-3 text-[13.5px]"><p className="font-medium text-warn">The material behind this may have changed</p><ul className="list-disc pl-5">{fresh.reasons.map((r) => <li key={r}>{r}</li>)}</ul><p className="mt-1 text-[12.5px]">Regenerate to get a fresh draft. Sections you edited are kept, and earlier drafts stay in history.</p></div>}
+        <DocWorkbench pid={pid} a={{ id: a.id, title: a.title, type: a.type, initiative_id: a.initiative_id }} tpl={liteOf(tpl)} sections={dd.sections} prov={dd.prov} pending={dd.pending}
+          intake={intakeStatus(tpl, ctx)} refs={refs} sources={src.filter((s) => s.content_kind === "text").map((s) => ({ id: s.id, title: s.title }))} selectedSources={selected} useRecords={dd.useRecords !== false}
+          counts={{ findings: ctx.findings.length, opportunities: ctx.opportunities.length, concepts: ctx.concepts.length, assumptions: ctx.assumptions.length, decisions: ctx.decisions.length }}
+          last={lastRun ? { seq: lastRun.seq, uncertainties: (lastRun.results.detail as any)?.uncertainties ?? [], notes: (lastRun.results.detail as any)?.notes ?? [], mode: lastRun.mode } : null}
+          next={(NEXT[a.type] ?? []).map((k) => ({ key: k, label: CATALOG_BY_KEY[k].label, produces: CATALOG_BY_KEY[k].produces }))} hasInitiative={!!a.initiative_id} mode={aiMode()} icon={cat?.icon ?? "file"} />
+        <div className="mt-6 grid gap-4 md:grid-cols-2 no-print">
+          <RunHistory pid={pid} a={aRow} current={cur?.seq ?? 0} runs={runs.map((r) => ({ seq: r.seq, mode: r.mode, created_at: r.created_at, summary: "", sourceCount: r.inputs.sources?.length ?? 0 }))} />
+          <RevisionList pid={pid} a={aRow} revisions={revisions} />
+        </div>
+        <div className="mt-4"><DeleteAnalysis pid={pid} id={aid} title={a.title} /></div>
+      </div>
+    );
+  }
   let inputs: React.ReactNode = null, action: React.ReactNode = null, results: React.ReactNode = null;
   const sourceBased = ["research_synthesis", "custom", "process_mapping"].includes(a.type);
   if (sourceBased) {
@@ -38,7 +74,13 @@ export default async function AnalysisPage({ params, searchParams }: { params: P
   } else if (a.type === "event_log") {
     action = <RunBar pid={pid} a={aRow} label={runs.length ? "Re-run with latest evidence" : "Run"} disabledReason={cfg.sourceId ? undefined : "Import and map an event log first."} extra={cfg.sourceId ? <Link className="btn" href={`/p/${pid}/eventlog/${cfg.sourceId}?a=${aid}${a.initiative_id ? `&i=${a.initiative_id}` : ""}`}>Change mapping or options</Link> : undefined} />;
     const s = cfg.sourceId ? get<any>("SELECT id, title, version FROM sources WHERE id=?", cfg.sourceId) : null;
-    inputs = s && <section className="card p-4 text-[13.5px]"><h2 className="text-[15px] font-semibold">Inputs</h2><p>Dataset source: <Link className="underline" href={`/p/${pid}/sources/${s.id}`}>{s.title}</Link> (currently version {s.version}). Mapping: case = {cfg.mapping?.caseId}, activity = {cfg.mapping?.activity}, time = {cfg.mapping?.timestamp}{cfg.mapping?.actor ? `, actor = ${cfg.mapping.actor}` : ""}. To add newer evidence, update the source’s content in the reader, then re-run.</p></section>;
+    if (!cfg.sourceId) {
+      const csvs = src.filter((x) => x.content_kind === "csv");
+      inputs = <section className="card p-5"><h2 className="text-[16px] font-semibold">Choose the event log to mine</h2><p className="mb-3 mt-1 text-[13.5px] text-muted">Process mining needs a CSV with a case ID, an activity name and a timestamp for each event. You’ll map the columns and review data quality before anything is analysed.</p>
+        {csvs.length ? <ul className="mb-3 divide-y divide-line rounded-lg border border-line">{csvs.map((x) => <li key={x.id} className="flex items-center justify-between gap-3 px-3 py-2 text-[13.5px]"><span className="truncate">{x.title}</span><Link className="btn btn-sm btn-primary" href={`/p/${pid}/eventlog/${x.id}?a=${aid}${a.initiative_id ? `&i=${a.initiative_id}` : ""}`}>Map columns</Link></li>)}</ul> : <p className="mb-3 text-[13px] text-muted">No CSV in this product yet.</p>}
+        <AddEvidence pid={pid} iid={a.initiative_id ?? undefined} label="Add a CSV or other evidence" /></section>;
+    }
+    inputs = inputs ?? (s && <section className="card p-4 text-[13.5px]"><h2 className="text-[15px] font-semibold">Inputs</h2><p>Dataset source: <Link className="underline" href={`/p/${pid}/sources/${s.id}`}>{s.title}</Link> (currently version {s.version}). Mapping: case = {cfg.mapping?.caseId}, activity = {cfg.mapping?.activity}, time = {cfg.mapping?.timestamp}{cfg.mapping?.actor ? `, actor = ${cfg.mapping.actor}` : ""}. To add newer evidence, update the source’s content in the reader, then re-run.</p></section>);
   } else if (a.type === "problem_analysis") inputs = <ProblemEditor pid={pid} a={aRow} />;
   else if (a.type === "solution_comparison") { inputs = <ComparisonEditor pid={pid} a={aRow} concepts={listConcepts(pid, a.initiative_id ?? undefined).map((c) => ({ id: c.id, title: c.title }))} />; action = <RunBar pid={pid} a={aRow} label="Save this comparison as a run" />; }
   else if (a.type === "opportunity_analysis" || a.type === "assumption_analysis") {

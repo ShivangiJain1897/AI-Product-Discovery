@@ -35,6 +35,8 @@ CREATE TABLE IF NOT EXISTS initiatives (
   process_enabled INTEGER NOT NULL DEFAULT 0,
   is_demo INTEGER NOT NULL DEFAULT 0,
   started_mode TEXT NOT NULL DEFAULT 'question',
+  topic_type TEXT NOT NULL DEFAULT 'question',
+  topic_text TEXT NOT NULL DEFAULT '',
   created_at TEXT NOT NULL,
   updated_at TEXT NOT NULL,
   closed_at TEXT
@@ -318,6 +320,7 @@ CREATE TABLE IF NOT EXISTS analyses (
   interpretation TEXT NOT NULL DEFAULT '',
   status TEXT NOT NULL DEFAULT 'draft',
   parent_analysis_id TEXT,
+  plan_order INTEGER,
   created_at TEXT NOT NULL,
   updated_at TEXT NOT NULL,
   deleted_at TEXT

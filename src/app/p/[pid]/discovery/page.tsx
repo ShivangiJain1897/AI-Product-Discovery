@@ -12,8 +12,8 @@ export default async function Discovery({ params }: { params: Promise<{ pid: str
   const groups: [string, string][] = [["active", "Active"], ["paused", "Paused"], ["completed", "Completed"], ["archived", "Archived"]];
   return (
     <div className="mx-auto max-w-5xl px-6 py-5">
-      <div className="mb-4 flex flex-wrap items-end justify-between gap-3"><div><h1 className="text-[20px] font-semibold">Discovery</h1><p className="text-[13.5px] text-muted">Ongoing and past investigations. Completing one never closes the product: its evidence, findings and decisions stay in Knowledge, and you can reopen it any time.</p></div><Link className="btn btn-primary" href={`/p/${pid}/new`}>New discovery</Link></div>
-      {inis.length === 0 && <Empty title="No discovery initiatives yet" action={<Link className="btn btn-primary" href={`/p/${pid}/new`}>Ask your first question</Link>}>A discovery is an investigation organised around a question and the decision it should inform. Or skip it and start an analysis directly.</Empty>}
+      <div className="mb-4 flex flex-wrap items-end justify-between gap-3"><div><h1 className="text-[20px] font-semibold">Topics</h1><p className="text-[13.5px] text-muted">Everything you are, or have been, working on. Completing one never closes the product: its evidence, findings and decisions stay in Knowledge, and you can reopen it any time.</p></div><Link className="btn btn-primary" href={`/p/${pid}/new`}>New topic</Link></div>
+      {inis.length === 0 && <Empty title="No topics yet" action={<Link className="btn btn-primary" href={`/p/${pid}/new`}>Start your first topic</Link>}>A topic is an idea, a problem, a requirement or a question you are working on. Choose what to do with it — research, analysis, design, a PRD — and come back to add more.</Empty>}
       {groups.map(([k, l]) => { const list = inis.filter((i) => i.status === k); return list.length > 0 && (
         <section key={k} className="mb-6" aria-labelledby={`g-${k}`}><h2 id={`g-${k}`} className="h-section mb-2">{l} ({list.length})</h2>
           <ul className="space-y-2">{list.map((i) => (

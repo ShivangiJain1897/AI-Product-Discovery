@@ -3,7 +3,7 @@ import { expect, test, type Page } from "@playwright/test";
 async function openInitiative(page: Page, product: string, title: string) {
   await page.goto("/");
   await page.getByRole("link", { name: product }).first().click();
-  await page.getByRole("link", { name: "Discovery", exact: true }).first().click();
+  await page.getByRole("link", { name: "Topics", exact: true }).first().click();
   await page.locator("#main").getByRole("link", { name: title, exact: true }).click();
 }
 
@@ -61,7 +61,7 @@ test.describe.serial("demo examples, products, analysis, process (Slices 3–5)"
   test("event-log analysis: deterministic metrics, definitions, data quality, derived finding keeps reference", async ({ page }) => {
     await page.goto("/");
     await page.getByRole("link", { name: "Client Onboarding Service" }).first().click();
-    await page.getByRole("link", { name: "Analyses" }).first().click();
+    await page.getByRole("link", { name: "Outputs" }).first().click();
     await page.getByRole("link", { name: "Where does onboarding time go?" }).click();
     await expect(page.getByText("Cases", { exact: true }).first()).toBeVisible();
     await expect(page.getByText("120", { exact: true }).first()).toBeVisible();
@@ -133,7 +133,7 @@ test.describe.serial("demo examples, products, analysis, process (Slices 3–5)"
   test("returning later: reopen a completed initiative", async ({ page }) => {
     await page.goto("/");
     await page.getByRole("link", { name: "Client Onboarding Service" }).first().click();
-    await page.getByRole("link", { name: "Discovery" }).first().click();
+    await page.getByRole("link", { name: "Topics" }).first().click();
     await expect(page.getByRole("heading", { name: /Completed/ })).toBeVisible();
     await page.getByRole("button", { name: "Reopen for further discovery" }).click();
     await expect(page.getByRole("heading", { name: /Completed/ })).toHaveCount(0);

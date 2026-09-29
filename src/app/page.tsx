@@ -29,7 +29,7 @@ export default function Home() {
   });
   const hasDemo = demoLoaded();
   return (
-    <div className="min-h-screen">
+    <div className="hero min-h-screen">
       <header className="flex items-center justify-between px-6 py-4">
         <span className="flex items-center gap-2 font-serif text-[20px] font-semibold tracking-tight text-accent-strong"><span aria-hidden className="inline-block h-5 w-5 rounded-full border-[5px] border-accent" />Clarity</span>
         <div className="flex items-center gap-3"><span className={`badge ${aiMode() === "live" ? "badge-accent" : "badge-warn"}`}>AI: {aiMode() === "live" ? "live model" : "demo mode — no API key"}</span><SaveIndicator /></div>

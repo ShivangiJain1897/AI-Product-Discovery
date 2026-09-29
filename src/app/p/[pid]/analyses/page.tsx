@@ -18,7 +18,7 @@ export default async function Analyses({ params, searchParams }: { params: Promi
   const from = sp.from ? (() => { const [t, id] = sp.from.split(":"); const l = labelOf(t as EntityType, id); return l ? { type: t, id, label: l.label } : null; })() : null;
   return (
     <div className="mx-auto max-w-6xl px-6 py-5">
-      <div className="mb-3 flex flex-wrap items-end justify-between gap-3"><div><h1 className="text-[20px] font-semibold">Analyses</h1><p className="text-[13.5px] text-muted">Investigations for this product. Start one inside a discovery, straight from here, or from a finding or opportunity. Reruns keep earlier results.</p></div>
+      <div className="mb-3 flex flex-wrap items-end justify-between gap-3"><div><h1 className="text-[20px] font-semibold">Outputs</h1><p className="text-[13.5px] text-muted">Investigations for this product. Start one inside a discovery, straight from here, or from a finding or opportunity. Reruns keep earlier results.</p></div>
         <NewAnalysis pid={pid} initiatives={initiatives.filter((i) => i.status !== "archived").map((i) => ({ id: i.id, title: i.title }))} sources={all.filter((s) => s.content_kind === "text").map((s) => ({ id: s.id, title: s.title }))} csvSources={all.filter((s) => s.content_kind === "csv").map((s) => ({ id: s.id, title: s.title }))} defaultInitiative={sp.i && sp.i !== "none" ? sp.i : undefined} from={from} /></div>
       <form className="card mb-4 flex flex-wrap items-end gap-3 p-3" role="search" aria-label="Filter analyses">
         <div><label className="label" htmlFor="f-q">Search</label><input id="f-q" name="q" defaultValue={sp.q} className="input" /></div>

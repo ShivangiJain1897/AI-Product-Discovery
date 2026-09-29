@@ -35,7 +35,7 @@ export function InitiativeNav({ pid, initiatives }: { pid: string; initiatives: 
         </NavLink>
         {expanded && (
           <ul className="ml-3.5 mt-0.5 border-l border-line pl-2">
-            {[["Overview", ""], ["Evidence", "/evidence"], ["Explore", "/explore"], ["Validate", "/validate"], ["Decide", "/decide"], ["Brief", "/brief"]].map(([l, s]) => (
+            {[["Work", ""], ["Evidence", "/evidence"], ["Explore", "/explore"], ["Validate", "/validate"], ["Decide", "/decide"], ["Brief", "/brief"]].map(([l, s]) => (
               <li key={l}><NavLink href={base + s} exact={s === ""} className="!py-1 !text-[13px]">{l}</NavLink></li>
             ))}
           </ul>
@@ -77,7 +77,7 @@ export function ProductSwitcher({ current, products }: { current: { id: string; 
 }
 
 type TopProps = { product: { id: string; name: string; is_demo: number }; initiatives: Ini[]; aiMode: "live" | "demo" };
-const SECTION_LABEL: Record<string, string> = { evidence: "Evidence", explore: "Explore", validate: "Validate", decide: "Decide", brief: "Brief", discovery: "Discovery", analyses: "Analyses", knowledge: "Knowledge", experiments: "Experiments", activity: "Activity", search: "Search", sources: "Evidence", maps: "Process map", new: "New discovery", eventlog: "Event-log import" };
+const SECTION_LABEL: Record<string, string> = { evidence: "Evidence", explore: "Explore", validate: "Validate", decide: "Decide", brief: "Brief", discovery: "Topics", analyses: "Outputs", knowledge: "Knowledge", experiments: "Experiments", activity: "Activity", search: "Search", sources: "Evidence", maps: "Process map", new: "New topic", eventlog: "Event-log import" };
 
 export function TopBar({ product, initiatives, aiMode }: TopProps) {
   const path = usePathname();
@@ -100,9 +100,9 @@ export function TopBar({ product, initiatives, aiMode }: TopProps) {
     else if (section === "validate") action = { label: "Design an experiment", href: `${b}/validate?new=experiment` };
     else if (section === "decide") action = { label: "Record a decision", href: `${b}/decide?new=decision` };
     else if (section === "brief") action = { label: "Print view", href: `${b}/brief/print` };
-  } else if (!section) action = { label: "New discovery", href: `${base}/new` };
-  else if (section === "discovery") action = { label: "New discovery", href: `${base}/new` };
-  else if (section === "analyses" && rest.length === 1) action = { label: "New analysis", href: `${base}/analyses?new=1` };
+  } else if (!section) action = { label: "New topic", href: `${base}/new` };
+  else if (section === "discovery") action = { label: "New topic", href: `${base}/new` };
+  else if (section === "analyses" && rest.length === 1) action = { label: "New output", href: `${base}/analyses?new=1` };
   else if (section === "knowledge") action = { label: "Add evidence", href: `${base}/knowledge?add=1` };
   void sp;
   return (

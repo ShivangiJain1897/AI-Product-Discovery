@@ -25,22 +25,22 @@ export default async function ProductLayout({ children, params }: { children: Re
         <nav className="mt-4" aria-label="Product sections">
           <ul className="space-y-0.5">
             <li><NavLink href={base} exact>Overview</NavLink></li>
-            <li><NavLink href={`${base}/discovery`}>Discovery</NavLink></li>
-            <li><NavLink href={`${base}/analyses`}>Analyses</NavLink></li>
+            <li><NavLink href={`${base}/discovery`}>Topics</NavLink></li>
+            <li><NavLink href={`${base}/analyses`}>Outputs</NavLink></li>
             <li><NavLink href={`${base}/knowledge`}>Knowledge</NavLink></li>
             <li><NavLink href={`${base}/experiments`}>Experiments</NavLink></li>
           </ul>
         </nav>
         <div className="mt-5">
-          <p className="h-section mb-1.5 px-2.5">Discovery initiatives</p>
+          <p className="h-section mb-1.5 px-2.5">Topics</p>
           <InitiativeNav pid={pid} initiatives={initiatives} />
-          <Link href={`${base}/new`} className="mt-1 block rounded-md px-2.5 py-1.5 text-[13px] text-accent-strong hover:bg-sunken">+ New discovery</Link>
+          <Link href={`${base}/new`} className="mt-1 block rounded-md px-2.5 py-1.5 text-[13px] text-accent-strong hover:bg-sunken">+ New topic</Link>
         </div>
       </aside>
       <div className="flex min-w-0 flex-1 flex-col">
         <TopBar product={{ id: pid, name: product.name, is_demo: product.is_demo }} initiatives={initiatives} aiMode={aiMode()} />
         <nav className="no-print flex gap-1 overflow-x-auto border-b border-line px-3 py-1.5 md:hidden" aria-label="Product sections (compact)">
-          {[["Overview", base], ["Discovery", `${base}/discovery`], ["Analyses", `${base}/analyses`], ["Knowledge", `${base}/knowledge`], ["Experiments", `${base}/experiments`]].map(([l, h]) => <NavLink key={l} href={h} exact={h === base}>{l}</NavLink>)}
+          {[["Overview", base], ["Topics", `${base}/discovery`], ["Outputs", `${base}/analyses`], ["Knowledge", `${base}/knowledge`], ["Experiments", `${base}/experiments`]].map(([l, h]) => <NavLink key={l} href={h} exact={h === base}>{l}</NavLink>)}
         </nav>
         <main id="main" className="min-w-0 flex-1">{children}</main>
       </div>

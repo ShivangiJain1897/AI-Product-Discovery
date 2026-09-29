@@ -83,6 +83,12 @@ export async function loadDemos() {
     await seedB();
   } finally { if (saved) process.env.ANTHROPIC_API_KEY = saved; }
   run("UPDATE products SET is_demo=1 WHERE id IN (SELECT DISTINCT product_id FROM initiatives WHERE is_demo=1)");
+  run("UPDATE initiatives SET topic_text=question WHERE topic_text=''");
+  run("UPDATE initiatives SET topic_type='problem' WHERE title LIKE 'Why does client onboarding%'");
+  for (const ini of all<any>("SELECT id FROM initiatives")) {
+    let n = 0;
+    for (const a of all<any>("SELECT id FROM analyses WHERE initiative_id=? ORDER BY created_at, rowid", ini.id)) run("UPDATE analyses SET plan_order=? WHERE id=?", ++n, a.id);
+  }
   return { skipped: false };
 }
 
@@ -205,6 +211,13 @@ async function seedA() {
   await cmd("source.linkInitiative", { productId: P, initiativeId: p3.id, sourceId: S.ops1, linked: true });
   await cmd("entity.create", { productId: P, initiativeId: p3.id, type: "decision", data: { decision_type: "pause", statement: "Pause AI-assisted document review until the checklist pilot shows how many document problems remain.", rationale: "Compliance raised audit risk and accuracy is unproven. Fixing unclear requirements may remove much of the problem cheaply.", alternatives: "Run a classification pilot now.", risks: "Assumption about classification accuracy is untested.", next_action: "Revisit after the checklist pilot." }, links: [{ type: "assumption", id: a3, relation: "informs", direction: "in" }, { type: "concept", id: c5, relation: "informs", direction: "in" }] });
   await cmd("initiative.setStatus", { productId: P, id: p3.id, status: "completed" });
+
+  // document workbenches: an RCA and a PRD assembled from the records above
+  const rcaA = await cmd("analysis.create", { productId: P, initiativeId: iid, type: "rca", title: "Root cause: why onboarding takes weeks", question: "Why does onboarding take so long?", scope: "initiative" });
+  await cmd("analysis.run", { productId: P, id: rcaA.id, answers: { symptom: `Median observed onboarding span is ${fmtDuration(res.span?.median)} and ${pct(chaseRepeat.share)} of cases repeat the document check`, pattern: "Mostly between document request and first check", tried: "Chasing clients by email" } });
+  const prdA = await cmd("analysis.create", { productId: P, initiativeId: iid, type: "prd", title: "PRD: document checklist pilot", question: "What are we building first?", scope: "initiative" });
+  await cmd("analysis.run", { productId: P, id: prdA.id });
+  await cmd("analysis.create", { productId: P, initiativeId: iid, type: "journey_map", title: "Client onboarding journey", question: "What is the client experience?", scope: "initiative" });
 
   // brief narrative to show manual editing coexisting with generated records
   await cmd("brief.saveNarrative", { productId: P, initiativeId: iid, key: "decision", narrative: "We are choosing the cheapest change that addresses the strongest evidence, and deliberately deferring automation." });
@@ -340,6 +353,10 @@ async function seedB() {
   const ea = await cmd("analysis.create", { productId: P, initiativeId: iid, type: "experiment_analysis", title: "Interpret the guided first-task test", question: "What can we conclude from the prototype test?" });
   await cmd("analysis.update", { productId: P, id: ea.id, fields: { data: { experimentId: e1 } } });
   await cmd("analysis.run", { productId: P, id: ea.id });
+  const qB = await cmd("analysis.create", { productId: P, initiativeId: iid, type: "questionnaire", title: "Interview guide: first-week experience", question: "What stops new users activating?", scope: "initiative" });
+  await cmd("analysis.run", { productId: P, id: qB.id, answers: { format: "Interview guide", length: "Medium (about 10)" } });
+  const prdB = await cmd("analysis.create", { productId: P, initiativeId: iid, type: "prd", title: "PRD: guided first task", question: "What should we build?", scope: "initiative" });
+  await cmd("analysis.run", { productId: P, id: prdB.id });
   const ss = await cmd("initiative.create", { productId: P, title: "Explore team onboarding for agencies", question: "Do agencies need a different setup path than small teams?", mode: "question" });
   run("UPDATE initiatives SET is_demo=1 WHERE id=?", ss.id);
 }

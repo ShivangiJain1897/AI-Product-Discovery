@@ -154,3 +154,21 @@ export function SimplePick({ pid, a, field, label, options, allowAll }: { pid: s
     <section className="card p-4"><Field label={label} htmlFor="sp"><select id="sp" className="input max-w-md" value={a.data[field] ?? ""} disabled={pending} onChange={(e) => run("analysis.update", { productId: pid, id: a.id, fields: { data: { ...a.data, [field]: e.target.value } } })}>{allowAll ? null : <option value="">Choose…</option>}{options.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}</select></Field></section>
   );
 }
+
+export function AnalysisHeaderLite({ pid, a, icon, initiative }: { pid: string; a: { id: string; title: string; status: string; initiative_id: string | null }; icon: string; initiative: { id: string; title: string } | null }) {
+  const { run, pending } = useAction();
+  const [edit, setEdit] = useState(false); const [t, setT] = useState(a.title);
+  return (
+    <header className="mb-5 flex flex-wrap items-start justify-between gap-3">
+      <div className="min-w-0">
+        {edit ? (
+          <form className="flex gap-2" onSubmit={async (e) => { e.preventDefault(); const r = await run("analysis.update", { productId: pid, id: a.id, fields: { title: t } }); if (r.ok) setEdit(false); }}><input aria-label="Title" className="input !text-[20px] font-semibold" value={t} onChange={(e) => setT(e.target.value)} autoFocus /><button className="btn btn-primary" disabled={pending}>Save</button></form>
+        ) : <h1 className="text-[24px] font-semibold leading-tight">{a.title} <button className="btn btn-quiet btn-sm align-middle" onClick={() => setEdit(true)} aria-label="Rename">✎</button></h1>}
+        <p className="mt-1 text-[13px] text-muted">{initiative ? <>Part of <Link className="underline" href={`/p/${pid}/i/${initiative.id}`}>{initiative.title.slice(0, 60)}</Link></> : "Product-level work, not attached to a topic"}</p>
+      </div>
+      <div className="flex items-center gap-2"><label className="sr-only" htmlFor="st">Status</label>
+        <select id="st" className="input !w-auto" value={a.status} onChange={(e) => run("analysis.update", { productId: pid, id: a.id, fields: { status: e.target.value } })}><option value="draft">Not started</option><option value="in_progress">In progress</option><option value="completed">Done</option></select></div>
+      <span className="hidden" aria-hidden>{icon}</span>
+    </header>
+  );
+}

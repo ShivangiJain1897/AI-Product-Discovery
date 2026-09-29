@@ -30,9 +30,9 @@ export default async function ProductOverview({ params }: { params: Promise<{ pi
 
       <Section id="resume-h" title="Resume recent work" hint="Pick up where you left off.">
         <div className="grid gap-3 md:grid-cols-3">
-          {lastInitiative && <Link href={`/p/${pid}/i/${lastInitiative.id}`} className="card p-3 hover:border-accent"><p className="h-section">Last discovery</p><p className="mt-0.5 text-[14px] font-medium">{lastInitiative.title}</p><p className="text-[12.5px] text-muted">updated {ago(lastInitiative.updated_at)}</p></Link>}
+          {lastInitiative && <Link href={`/p/${pid}/i/${lastInitiative.id}`} className="card p-3 hover:border-accent"><p className="h-section">Last topic</p><p className="mt-0.5 text-[14px] font-medium">{lastInitiative.title}</p><p className="text-[12.5px] text-muted">updated {ago(lastInitiative.updated_at)}</p></Link>}
           {lastAnalysis && <Link href={`/p/${pid}/analyses/${lastAnalysis.id}`} className="card p-3 hover:border-accent"><p className="h-section">Last analysis</p><p className="mt-0.5 text-[14px] font-medium">{lastAnalysis.title}</p><p className="text-[12.5px] text-muted">{lastAnalysis.typeLabel} · {ago(lastAnalysis.updated_at)}</p></Link>}
-          <div className="card p-3"><p className="h-section">Start something</p><div className="mt-1.5 flex flex-wrap gap-1.5"><Link className="btn btn-sm btn-primary" href={`/p/${pid}/new`}>New discovery</Link><Link className="btn btn-sm" href={`/p/${pid}/analyses?new=1`}>Start an analysis</Link><Link className="btn btn-sm" href={`/p/${pid}/knowledge?add=1`}>Add evidence</Link></div></div>
+          <div className="card p-3"><p className="h-section">Start something</p><div className="mt-1.5 flex flex-wrap gap-1.5"><Link className="btn btn-sm btn-primary" href={`/p/${pid}/new`}>New topic</Link><Link className="btn btn-sm" href={`/p/${pid}/analyses?new=1`}>Start an analysis</Link><Link className="btn btn-sm" href={`/p/${pid}/knowledge?add=1`}>Add evidence</Link></div></div>
         </div>
       </Section>
 
@@ -54,9 +54,9 @@ export default async function ProductOverview({ params }: { params: Promise<{ pi
         </Section>
       </div>
 
-      <Section id="ini-h" title="Discovery initiatives" action={<Link className="btn btn-sm" href={`/p/${pid}/discovery`}>All discovery</Link>}>
+      <Section id="ini-h" title="Topics" action={<Link className="btn btn-sm" href={`/p/${pid}/discovery`}>All topics</Link>}>
         <ul className="grid gap-2 md:grid-cols-2">{inis.filter((i) => i.status !== "archived").slice(0, 6).map((i) => <li key={i.id} className="card px-4 py-2.5"><div className="flex items-start justify-between gap-2"><Link className="text-[14px] font-medium hover:underline" href={`/p/${pid}/i/${i.id}`}>{i.title}</Link><span className={`badge capitalize ${i.status === "active" ? "badge-accent" : i.status === "paused" ? "badge-warn" : ""}`}>{i.status}</span></div><p className="text-[12.5px] text-muted">{i.counts.sources} sources · {i.counts.findings} findings · {i.counts.opportunities} opportunities · {i.counts.decisions} decisions</p></li>)}</ul>
-        {inis.length === 0 && <p className="card px-4 py-3 text-[13.5px] text-muted">No discovery yet. Ask a question, or run an analysis directly.</p>}
+        {inis.length === 0 && <p className="card px-4 py-3 text-[13.5px] text-muted">No topics yet. Start with an idea, a problem, a requirement or a question.</p>}
       </Section>
 
       <div className="grid gap-6 lg:grid-cols-2">

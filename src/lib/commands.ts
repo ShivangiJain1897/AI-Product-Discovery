@@ -17,6 +17,9 @@ import { traceDecision, getInitiative, getProduct } from "./queries";
 import { parseCsv, guessMapping, validate, DEFAULT_OPTIONS, type Mapping, type Options } from "./eventlog";
 import type { Kind } from "./ai/schemas";
 import { ITEM_SCHEMAS } from "./ai/schemas";
+import * as docs from "./docs";
+import { TOPIC_TYPES, CATALOG_BY_KEY } from "./catalog";
+import { TEMPLATES } from "./templates";
 import { entityHref } from "./routes";
 
 type A = Record<string, any>;
@@ -78,9 +81,55 @@ const H: Record<string, (a: A) => any | Promise<any>> = {
     });
     return { id };
   },
+  "topic.create": async (a) => {
+    const productId = pid(a);
+    const type = a.type in TOPIC_TYPES ? a.type : "question";
+    const text = String(req(a.text, "Describe what you’re working on — a sentence is enough.")).trim().slice(0, 20000);
+    const items: string[] = [...new Set<string>(a.items ?? [])].filter((k) => k in CATALOG_BY_KEY);
+    const firstLine = text.split("\n")[0].replace(/\s+/g, " ").trim();
+    const question = (type === "question" ? firstLine : firstLine).slice(0, 220);
+    const title = (a.title?.trim()) || trunc(question.replace(/[?.]+$/, ""), 70);
+    const ctx = { question, affected: a.affected ?? "", outcome: a.outcome ?? "", decision: a.decision ?? "", constraints: a.constraints ?? "", mode: "question" };
+    const plan = await generatePlan({ productId, ...ctx });
+    const id = newId("ini"); const ts = now();
+    tx(() => {
+      sql(`INSERT INTO initiatives (id, product_id, title, question, refined_question, refined_status, affected, outcome, decision_to_inform, constraints, plan, status, process_enabled, started_mode, topic_type, topic_text, created_at, updated_at)
+           VALUES (?,?,?,?,?,?,?,?,?,?,?,'active',?,?,?,?,?,?)`,
+        id, productId, title, question, plan.refinedQuestion, plan.refinedQuestion.trim() === question ? "none" : "proposed", ctx.affected, ctx.outcome, ctx.decision, ctx.constraints, j(plan),
+        items.some((k) => ["process_mapping", "event_log"].includes(k)) ? 1 : 0, "question", type, text, ts, ts);
+      if (a.background && String(a.background).trim()) ev.createSource(productId, { title: `Background: ${trunc(title, 50)}`, sourceType: "other", content: String(a.background), tags: ["topic background"] }, id);
+      items.forEach((k, i) => { const aid = an.createAnalysis(productId, { type: k, title: CATALOG_BY_KEY[k].label, question, initiativeId: id, scope: "initiative" }); sql("UPDATE analyses SET plan_order=? WHERE id=?", i + 1, aid); });
+      logActivity(productId, { initiativeId: id, kind: "created", entityType: "initiative", entityId: id, summary: `Started ${type}: ${trunc(title)}${items.length ? ` — planned ${items.length} piece(s) of work` : ""}` });
+    });
+    return { id };
+  },
+  "topic.addWork": (a) => {
+    const productId = pid(a); getInitiative(productId, a.initiativeId);
+    const items: string[] = [...new Set<string>(a.items ?? [])].filter((k) => k in CATALOG_BY_KEY);
+    if (!items.length) throw new DomainError("Choose at least one thing to do.");
+    const ini = getInitiative(productId, a.initiativeId);
+    const max = get<any>("SELECT MAX(plan_order) m FROM analyses WHERE initiative_id=?", a.initiativeId)?.m ?? 0;
+    const created: string[] = []; const skipped: string[] = [];
+    tx(() => items.forEach((k, i) => {
+      const dupe = get("SELECT 1 x FROM analyses a WHERE a.initiative_id=? AND a.type=? AND a.deleted_at IS NULL AND a.status='draft' AND NOT EXISTS (SELECT 1 FROM analysis_runs r WHERE r.analysis_id=a.id)", a.initiativeId, k);
+      if (dupe) { skipped.push(CATALOG_BY_KEY[k].label); return; }
+      const aid = an.createAnalysis(productId, { type: k, title: CATALOG_BY_KEY[k].label, question: ini.question, initiativeId: a.initiativeId, scope: "initiative" });
+      sql("UPDATE analyses SET plan_order=? WHERE id=?", max + i + 1, aid); created.push(aid);
+      if (["process_mapping", "event_log"].includes(k)) sql("UPDATE initiatives SET process_enabled=1 WHERE id=?", a.initiativeId);
+    }));
+    touchInitiative(a.initiativeId);
+    return { created, skipped };
+  },
+  "doc.generate": async (a) => { const p = pid(a); return docs.generateDoc(p, a.id, { answers: a.answers, useRecords: a.useRecords }); },
+  "doc.apply": (a) => { docs.applyDraft(pid(a), a.id, a.seq, a.keys ?? []); return {}; },
+  "doc.keepMine": (a) => { docs.keepMine(pid(a), a.id, a.keys ?? []); return {}; },
+  "doc.saveSection": (a) => { docs.saveSection(pid(a), a.id, a.key, a.value); return {}; },
+  "doc.saveAnswers": (a) => { docs.saveAnswers(pid(a), a.id, a.answers ?? {}); return {}; },
+  "doc.setRecords": (a) => { const p = pid(a); const row = an.getAnalysis(p, a.id); const d = docs.readDocData(row); d.useRecords = !!a.useRecords; sql("UPDATE analyses SET data=?, updated_at=? WHERE id=?", j(d), now(), a.id); return {}; },
+
   "initiative.update": (a) => {
     const productId = pid(a); getInitiative(productId, a.id);
-    const f = ["title", "question", "affected", "outcome", "decision_to_inform", "scope", "constraints"]; const sets: string[] = []; const p: unknown[] = [];
+    const f = ["title", "question", "affected", "outcome", "decision_to_inform", "scope", "constraints", "topic_text", "topic_type"]; const sets: string[] = []; const p: unknown[] = [];
     for (const k of f) if (k in a.fields) { if ((k === "title" || k === "question") && !String(a.fields[k]).trim()) throw new DomainError("This cannot be empty."); sets.push(`${k}=?`); p.push(a.fields[k]); }
     if (sets.length) { sql(`UPDATE initiatives SET ${sets.join(",")}, updated_at=? WHERE id=?`, ...p as never[], now(), a.id); logActivity(productId, { initiativeId: a.id, kind: "updated", entityType: "initiative", entityId: a.id, summary: "Updated the discovery frame" }); }
     return {};
@@ -320,6 +369,8 @@ function checkExperimentRules(cur: any, d: A) {
 async function runAnalysisCmd(productId: string, id: string, a: A) {
   const row = an.getAnalysis(productId, id);
   switch (row.type) {
+    case "research_plan": case "questionnaire": case "market_analysis": case "competitor_scan": case "rca": case "journey_map":
+    case "solution_design": case "requirements": case "prd": case "test_plan": { const r = await docs.generateDoc(productId, id, { answers: a.answers, useRecords: a.useRecords }); return { runId: r.runId, seq: r.seq }; }
     case "research_synthesis": case "custom": case "process_mapping": {
       const ids = an.analysisSourceIds(row);
       const kind: Kind = row.type === "process_mapping" ? "process_draft" : "synthesis";

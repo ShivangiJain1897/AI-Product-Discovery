@@ -21,7 +21,7 @@ Production: `npm run build && npm start`.
 ### Tests
 
 ```bash
-npm test            # 38 unit/integration tests (calculations, boundaries, proposals, staleness, maps, briefs)
+npm test            # 50 unit/integration tests (calculations, boundaries, proposals, staleness, maps, briefs, workbenches)
 npm run test:e2e    # Playwright journeys; builds the app and runs it on :3200 with a throwaway database
 npm run typecheck
 ```
@@ -37,16 +37,38 @@ E2E uses the Chromium at `/opt/pw-browsers`; set `CLARITY_CHROMIUM` to point els
 
 Either way, a proposal is a **preview**. Every quote and record ID in it is re-verified against your data before you can accept anything; unverifiable items are rejected and listed. Accepting is idempotent (double-click safe). Source documents are treated as untrusted data. Evidence strength is **computed from your excerpts** (independent voices, not quote counts) — never taken from the model. Event-log numbers come only from deterministic code.
 
+## How it works (the flow)
+
+1. **Add a product** (a name is enough). Each product is its own workspace; nothing mixes between products.
+2. **Add a topic** — an **idea, problem, requirement or question**, in a sentence (or paste a brief).
+3. **Choose what to do** from the catalog — as many as you like:
+   - *Understand:* user research plan · questionnaire / interview guide · synthesize research · market analysis · competitor scan
+   - *Diagnose:* root-cause analysis · process mining (event-log CSV) · process map · frame the problem
+   - *Design:* user journey map · solution design · requirements & user stories · **PRD**
+   - *Prioritise & validate:* prioritise opportunities · assumption map · test plan
+
+   Each option shows what it produces and whether it is **Ready / Better later / Needs input**. Nothing is ever blocked.
+4. **Work happens in workbenches** with one shape: *what it will use → a few questions (only what isn’t already known; “I don’t know” is fine) → generate a draft → edit → export.*
+5. **Come back any time.** The topic page lists your work with its state, and a **What now?** strip suggests specific next steps (refresh something whose inputs changed; “add a journey map after your research synthesis”; “generate a PRD from what you have”).
+
+Everything stays connected: evidence, findings, opportunities, concepts, assumptions and decisions are shared records that every workbench can read and cite (`[[finding:…]]` links inside documents resolve back to the source).
+
+## Honesty rules the workbenches follow
+
+- **Nothing is invented.** In demo mode a draft only restructures your words and records; market and competitor tables are left empty for facts you can cite. Live mode may not cite unknown record IDs and its quotes are verified against your sources.
+- **Your edits are never overwritten.** Regenerating refreshes only sections you haven’t touched; for the rest it offers “Use the new draft / Keep mine”. Every run is kept.
+- **Answers you type are not evidence** and are labelled as your description.
+- **Numbers are deterministic** (event-log metrics, prioritisation); AI never calculates them.
+- **Drafts say what they are:** *Starter draft from your records* (demo), *AI draft — review it* (live), or *Edited by you*.
+
 ## What’s in the box
 
-- **My Products** portfolio (add, search, archive/restore, resume) with a “What are you trying to understand?” start box.
-- **Product workspace**: Overview · Discovery · Analyses · Knowledge · Experiments (+ activity history, product-scoped search, recently deleted).
-- **Discovery initiative**: Overview (frame, editable plan, readiness *signals* — no completion %) · Evidence · Explore (opportunities, tree, prioritisation, optional process lens) · Validate · Decide · Brief.
-- **Evidence**: paste, `.txt`, `.md`, `.csv`; reader with highlights, observations, finding links, source versioning; CSV row references.
-- **Analyses** with runs, history, comparison, duplicate, saved revisions: research synthesis, problem analysis, process mapping, event-log analysis, opportunity analysis, solution comparison, assumption analysis, future-state comparison, experiment analysis, custom.
-- **Process maps** (React Flow + synchronized table): steps, decisions, labelled branches, loops, owners; evidence/inferred provenance; future-state clones with a frozen baseline; stable step IDs; change rationale; optional formula-based benefit *scenarios* (always labelled estimates).
-- **Event-log analysis**: column mapping → validation review → deterministic metrics (variants, percentiles, repeats, handoffs, gaps) with plain-language definitions and honest caveats.
-- **Decisions & brief**: decision trace back to exact source/analysis versions; living brief with editable narrative (never overwritten; “needs refresh” flags), Markdown export, print view, JSON workspace export.
+- **My Products** portfolio and **Topics**, **Outputs** (all work across topics, filterable), **Knowledge**, **Experiments**, activity history, product-scoped search, recently deleted.
+- **Evidence:** paste, `.txt`, `.md`, `.csv`; reader with highlights, observations, finding links, versioning; CSV row references.
+- **Deeper views inside a topic:** Evidence · Explore (opportunities, tree, prioritisation, process lens) · Validate · Decide · Brief.
+- **Process maps** (React Flow + synchronized table), future-state clones with a frozen baseline, comparison, benefit scenarios (always labelled estimates).
+- **Event-log analysis:** column mapping → validation review → deterministic metrics with plain-language definitions.
+- **Decisions & brief:** decision trace to exact source/analysis versions; living brief; Markdown, JSON and print exports.
 
 ## Architecture
 
@@ -57,6 +79,9 @@ src/lib/links.ts         relationships + product boundary    src/lib/priority.ts
 src/lib/entities.ts      generic CRUD, soft delete, impact   src/lib/brief.ts      brief + refresh hashing
 src/lib/evidence.ts      sources, versions, excerpts, stale  src/lib/analyses.ts   runs, freshness, compare
 src/lib/process.ts       maps, clone, diff, layout           src/lib/ai/*          adapter: demo | live, schemas, validate, accept
+src/lib/catalog.ts    the catalog + readiness + “what next” rules
+src/lib/templates.ts  workbench templates, adaptive questions, scaffold generators
+src/lib/docs.ts       generate / apply / save for document workbenches
 src/lib/commands.ts      the single write path (/api/command)  src/lib/queries.ts    read side (always product-scoped)
 ```
 

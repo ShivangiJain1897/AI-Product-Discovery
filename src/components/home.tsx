@@ -4,30 +4,22 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { useAction } from "@/lib/client";
 import { ErrorText, Modal, Field } from "./ui";
-
-const EXAMPLES = [
-  "Why does client onboarding take so long?",
-  "Why do new users abandon product setup?",
-  "Which parts of our service process create avoidable work?",
-  "Is this customer problem important enough to address?",
-  "Where would AI meaningfully improve an employee workflow?",
-  "Which solution should we test before committing engineering capacity?",
-];
+import { Icon } from "./icon";
+import { TOPIC_TYPES, type TopicType } from "@/lib/catalog";
 
 type P = { id: string; name: string };
 
 export function StartBox({ products }: { products: P[] }) {
   const { run, pending, error, setError, router } = useAction();
+  const [type, setType] = useState<TopicType>("problem");
   const [q, setQ] = useState("");
   const [pid, setPid] = useState(products[0]?.id ?? "__new");
   const [newName, setNewName] = useState("");
-  const [ex, setEx] = useState(0);
   const ref = useRef<HTMLTextAreaElement>(null);
-  useEffect(() => { const t = setInterval(() => setEx((i) => (i + 1) % EXAMPLES.length), 4500); return () => clearInterval(t); }, []);
 
-  async function start(mode: "question" | "evidence" | "process") {
+  async function go() {
     setError(null);
-    if (mode === "question" && !q.trim()) { setError("Type the question you want to answer, or pick an example below."); ref.current?.focus(); return; }
+    if (!q.trim()) { setError("Say a little about what you’re working on — a sentence is enough."); ref.current?.focus(); return; }
     let productId = pid;
     if (pid === "__new") {
       if (!newName.trim()) { setError("Name the product this is about. A name is all you need."); return; }
@@ -35,49 +27,39 @@ export function StartBox({ products }: { products: P[] }) {
       if (!r.ok) return;
       productId = r.data.id;
     }
-    router.push(`/p/${productId}/new?mode=${mode}${q.trim() ? `&q=${encodeURIComponent(q.trim())}` : ""}`);
+    router.push(`/p/${productId}/new?type=${type}&q=${encodeURIComponent(q.trim())}`);
   }
 
   return (
-    <section aria-labelledby="start-h" className="mx-auto max-w-3xl text-center">
-      <h1 id="start-h" className="font-serif text-[34px] font-semibold leading-tight tracking-tight">What are you trying to understand?</h1>
-      <p className="mx-auto mt-2 max-w-xl text-[15px] text-muted">Start with a question. Clarity keeps the evidence, the reasoning and the decision together, so you can explain <em>why</em>.</p>
-      <div className="mt-6 text-left">
-        <label htmlFor="start-q" className="sr-only">Discovery question</label>
-        <textarea id="start-q" ref={ref} rows={2} value={q} onChange={(e) => setQ(e.target.value)} placeholder={EXAMPLES[ex]}
-          className="input !rounded-xl !px-4 !py-3 !text-[17px] shadow-sm" onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); start("question"); } }} />
-        <div className="mt-2 flex flex-wrap items-center gap-x-2 gap-y-1 text-[12.5px] text-muted">
-          <span>Try:</span>
-          {EXAMPLES.slice(0, 3).map((e) => <button key={e} type="button" className="rounded-full border border-line px-2 py-0.5 hover:bg-sunken" onClick={() => { setQ(e); ref.current?.focus(); }}>{e}</button>)}
-        </div>
-        <div className="mt-4 flex flex-wrap items-end gap-3">
-          <div className="min-w-[200px]">
-            <label className="label" htmlFor="start-p">In product</label>
-            <select id="start-p" className="input" value={pid} onChange={(e) => setPid(e.target.value)}>
-              {products.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
-              <option value="__new">＋ A new product…</option>
-            </select>
-          </div>
-          {pid === "__new" && (
-            <div className="min-w-[200px] flex-1">
-              <label className="label" htmlFor="start-n">Product name</label>
-              <input id="start-n" className="input" value={newName} onChange={(e) => setNewName(e.target.value)} placeholder="e.g. Client Portal" />
-            </div>
-          )}
-        </div>
-        <ErrorText message={error} />
-        <div className="mt-4 grid gap-2.5 sm:grid-cols-3">
-          {([
-            ["question", "Start with a question", "You know what you want to find out."],
-            ["evidence", "Start with evidence", "You have notes, transcripts or data to make sense of."],
-            ["process", "Start with a process", "You need to understand how work actually happens."],
-          ] as const).map(([m, t, d]) => (
-            <button key={m} type="button" disabled={pending} onClick={() => start(m)} className="card px-4 py-3 text-left transition-colors hover:border-accent hover:bg-accent-soft/40 disabled:opacity-60">
-              <span className="block text-[14.5px] font-semibold text-accent-strong">{t}</span>
-              <span className="mt-0.5 block text-[12.5px] text-muted">{d}</span>
+    <section aria-labelledby="start-h" className="mx-auto max-w-3xl text-center fade-in">
+      <h1 id="start-h" className="font-serif text-[38px] font-semibold leading-[1.1] tracking-tight">What are you working on?</h1>
+      <p className="mx-auto mt-3 max-w-xl text-[15.5px] text-muted">An idea, a problem, a requirement or a question. Start with a sentence — then choose what to do with it: research, analysis, design, a PRD.</p>
+      <div className="mt-7 text-left">
+        <div role="radiogroup" aria-label="What kind of thing is it?" className="mb-3 flex flex-wrap justify-center gap-2">
+          {(Object.keys(TOPIC_TYPES) as TopicType[]).map((t) => (
+            <button key={t} type="button" role="radio" aria-checked={type === t} onClick={() => setType(t)}
+              className={`inline-flex items-center gap-1.5 rounded-full border px-3.5 py-1.5 text-[13.5px] font-medium transition-all ${type === t ? "border-accent bg-accent text-white shadow-[0_4px_14px_-6px_rgba(24,77,71,0.6)]" : "border-line-strong bg-surface hover:bg-sunken"}`}>
+              <Icon name={TOPIC_TYPES[t].icon} size={15} />{TOPIC_TYPES[t].label}
             </button>
           ))}
         </div>
+        <div className="rounded-2xl border border-line-strong bg-surface p-2 shadow-[var(--shadow-lift)] focus-within:border-accent focus-within:shadow-[0_0_0_3px_rgba(35,100,93,0.14),var(--shadow-lift)]">
+          <label htmlFor="start-q" className="sr-only">Describe what you’re working on</label>
+          <textarea id="start-q" ref={ref} rows={2} value={q} onChange={(e) => setQ(e.target.value)} placeholder={TOPIC_TYPES[type].placeholder}
+            className="w-full resize-none rounded-xl bg-transparent px-3.5 py-2.5 text-[17px] outline-none placeholder:text-muted/70" onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); go(); } }} />
+          <div className="flex flex-wrap items-center gap-2 px-2 pb-1 pt-1">
+            <label className="sr-only" htmlFor="start-p">In product</label>
+            <select id="start-p" className="input !w-auto !py-1.5 text-[13px]" value={pid} onChange={(e) => setPid(e.target.value)}>
+              {products.map((p) => <option key={p.id} value={p.id}>In {p.name}</option>)}
+              <option value="__new">＋ In a new product…</option>
+            </select>
+            {pid === "__new" && <><label className="sr-only" htmlFor="start-n">Product name</label><input id="start-n" className="input !w-52 !py-1.5 text-[13px]" value={newName} onChange={(e) => setNewName(e.target.value)} placeholder="Product name" /></>}
+            <button type="button" disabled={pending} onClick={go} className="btn btn-primary ml-auto !px-5 !py-2">Continue<Icon name="arrow" size={15} /></button>
+          </div>
+        </div>
+        <div className="mt-3 flex flex-wrap justify-center gap-x-2 gap-y-1 text-[12.5px] text-muted"><span>Try:</span>
+          {TOPIC_TYPES[type].examples.map((e) => <button key={e} type="button" className="rounded-full border border-line px-2.5 py-0.5 hover:bg-sunken" onClick={() => { setQ(e); ref.current?.focus(); }}>{e}</button>)}</div>
+        <div className="mt-2 text-center"><ErrorText message={error} /></div>
       </div>
     </section>
   );

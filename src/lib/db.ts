@@ -14,7 +14,16 @@ function open(file: string): DB {
   const d = new req.DatabaseSync(file);
   d.exec("PRAGMA journal_mode = WAL; PRAGMA foreign_keys = ON; PRAGMA busy_timeout = 5000;");
   d.exec(SCHEMA);
+  migrate(d);
   return d;
+}
+
+/** Additive migrations for databases created by earlier versions. */
+function migrate(d: DB) {
+  const has = (table: string, col: string) => (d.prepare(`PRAGMA table_info(${table})`).all() as { name: string }[]).some((c) => c.name === col);
+  if (!has("initiatives", "topic_type")) d.exec("ALTER TABLE initiatives ADD COLUMN topic_type TEXT NOT NULL DEFAULT 'question'");
+  if (!has("initiatives", "topic_text")) d.exec("ALTER TABLE initiatives ADD COLUMN topic_text TEXT NOT NULL DEFAULT ''");
+  if (!has("analyses", "plan_order")) d.exec("ALTER TABLE analyses ADD COLUMN plan_order INTEGER");
 }
 
 export function dbPath() {
