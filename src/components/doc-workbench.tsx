@@ -1,7 +1,7 @@
 "use client";
 import Link from "next/link";
 import { useState, type ReactNode } from "react";
-import { useAction } from "@/lib/client";
+import { rpc, useAction } from "@/lib/client";
 import { Icon } from "./icon";
 import { ErrorText } from "./ui";
 import { docToMarkdown, isEmptyValue, type SectionDef, type SectionValue, type TableValue, type TemplateLite } from "@/lib/templates";
@@ -131,7 +131,7 @@ export function DocWorkbench({ pid, a, tpl, sections, prov, pending, intake, ref
                       ) : i.q.kind === "choice" ? (
                         <div className="mt-1 flex flex-wrap gap-1.5" role="radiogroup" aria-label={i.q.label}>{i.q.options!.map((o) => <button key={o} type="button" role="radio" aria-checked={answers[i.q.key] === o} onClick={() => setAns(i.q.key, answers[i.q.key] === o ? "" : o)} className={`rounded-full border px-3 py-1 text-[13px] ${answers[i.q.key] === o ? "border-accent bg-accent text-white" : "border-line-strong bg-surface hover:bg-sunken"}`}>{o}</button>)}</div>
                       ) : (
-                        <div className="mt-1 flex gap-2"><input id={`q-${i.q.key}`} className="input" placeholder={i.q.placeholder ?? ""} value={answers[i.q.key] === "unknown" ? "" : answers[i.q.key] ?? ""} disabled={answers[i.q.key] === "unknown"} onChange={(e) => setAns(i.q.key, e.target.value)} onBlur={() => answers[i.q.key] && run("doc.saveAnswers", { productId: pid, id: a.id, answers: { [i.q.key]: answers[i.q.key] } }, { refresh: false })} />
+                        <div className="mt-1 flex gap-2"><input id={`q-${i.q.key}`} className="input" placeholder={i.q.placeholder ?? ""} value={answers[i.q.key] === "unknown" ? "" : answers[i.q.key] ?? ""} disabled={answers[i.q.key] === "unknown"} onChange={(e) => setAns(i.q.key, e.target.value)} onBlur={() => { if (answers[i.q.key]) void rpc("doc.saveAnswers", { productId: pid, id: a.id, answers: { [i.q.key]: answers[i.q.key] } }); }} />
                           <button type="button" className={`btn btn-sm ${answers[i.q.key] === "unknown" ? "btn-primary" : ""}`} onClick={() => setAns(i.q.key, answers[i.q.key] === "unknown" ? "" : "unknown")}>I don’t know</button></div>
                       )}
                       {i.q.why && <p className="mt-0.5 text-[12px] text-muted">{i.q.why}</p>}
