@@ -214,17 +214,17 @@ async function buildCurrentMap(P: string, iid: string, S: Record<string, string>
   const id = createMap(P, { name: "Current state — client onboarding", kind: "current", initiativeId: iid, blank: false, description: "Built from the SOP and interviews. Steps marked “inferred” are not in the SOP and need confirmation." });
   const N = (name: string, type: any, actor: string, x: number, y: number, extra: any = {}) => insertNode(id, { name, type, actor, x, y, provenance: "evidence", ...extra });
   const sopIdx = (needle: string) => ex(P, S.sop, needle);
-  const start = N("Application received", "activity", "Sales", 0, 100, { system: "CRM", description: "Application is logged in the CRM." });
-  const req = N("Send document request", "activity", "Relationship manager", 240, 100, { system: "Email", outputs: "Document request email", pain_points: "Email lists document names but not examples of what is accepted." });
-  const sub = N("Submit documents", "activity", "Client", 480, 100, { system: "Upload portal", timing: "Recorded median gap after request: several days (see event log)", pain_points: "Clients unsure what counts as proof of address; no acknowledgement after upload." });
-  const chk = N("Check documents", "activity", "Operations", 720, 100, { system: "Checklist spreadsheet", pain_points: "Checklist varies by client type; no shared record of what has been reviewed." });
-  const dec = N("Documents complete and valid?", "decision", "Operations", 960, 100);
-  const chase = N("Chase for missing documents", "activity", "Relationship manager", 960, 300, { pain_points: "Manual chasing by email; tracked in personal spreadsheets." });
-  const kyc = N("KYC and source-of-funds review", "activity", "Compliance", 1200, 100, { timing: "About a day when the file is complete (compliance and operations interviews)" });
-  const more = N("Request additional information", "activity", "Compliance", 1200, 300, { provenance: "inferred", description: "SOP mentions it; how the request reaches the client is not documented.", pain_points: "Raised late in the review; the form does not collect source of funds." });
-  const setup = N("Set up account", "activity", "Operations", 1440, 100, { system: "Core system", pain_points: "Details re-entered manually from documents." });
-  const call = N("Welcome call", "activity", "Relationship manager", 1680, 100);
-  const done = N("Mark onboarding complete", "activity", "Operations", 1920, 100);
+  const start = N("Application received", "activity", "Sales", 0, 60, { system: "CRM", description: "Application is logged in the CRM." });
+  const req = N("Send document request", "activity", "Relationship manager", 210, 60, { system: "Email", outputs: "Document request email", pain_points: "Email lists document names but not examples of what is accepted." });
+  const sub = N("Submit documents", "activity", "Client", 420, 60, { system: "Upload portal", timing: "Recorded median gap after request: several days (see event log)", pain_points: "Clients unsure what counts as proof of address; no acknowledgement after upload." });
+  const chk = N("Check documents", "activity", "Operations", 630, 60, { system: "Checklist spreadsheet", pain_points: "Checklist varies by client type; no shared record of what has been reviewed." });
+  const dec = N("Documents complete and valid?", "decision", "Operations", 840, 60);
+  const chase = N("Chase for missing documents", "activity", "Relationship manager", 840, 240, { pain_points: "Manual chasing by email; tracked in personal spreadsheets." });
+  const kyc = N("KYC and source-of-funds review", "activity", "Compliance", 630, 420, { timing: "About a day when the file is complete (compliance and operations interviews)" });
+  const more = N("Request additional information", "activity", "Compliance", 630, 570, { provenance: "inferred", description: "SOP mentions it; how the request reaches the client is not documented.", pain_points: "Raised late in the review; the form does not collect source of funds." });
+  const setup = N("Set up account", "activity", "Operations", 840, 420, { system: "Core system", pain_points: "Details re-entered manually from documents." });
+  const call = N("Welcome call", "activity", "Relationship manager", 1050, 420);
+  const done = N("Mark onboarding complete", "activity", "Operations", 1260, 420);
   const link_ = (a: any, b: any, label = "") => addEdge(P, id, a.stable_id, b.stable_id, label);
   link_(start, req); link_(req, sub); link_(sub, chk); link_(chk, dec); link_(dec, kyc, "Yes"); link_(dec, chase, "No"); link_(chase, sub, "Return to submit");
   link_(kyc, setup, "Complete"); link_(kyc, more, "Needs information"); link_(more, kyc, "Repeat review"); link_(setup, call); link_(call, done);
@@ -248,8 +248,8 @@ async function buildFutures(P: string, iid: string, mapId: string, res: Analysis
   const f1 = cloneAsFuture(P, mapId, "Checklist and pre-check proposal");
   const m1 = loadMap(f1)!;
   const byName = (m: any, n: string) => m.nodes.find((x: any) => x.name === n)!;
-  const list = addNode(P, f1, { name: "Client reviews document checklist with examples", type: "activity", actor: "Client", system: "Application form", x: 240, y: 260, provenance: "manual", description: "Shown at application and in the request email." });
-  const pre = addNode(P, f1, { name: "Automated completeness pre-check on upload", type: "activity", actor: "Client", system: "Upload portal", x: 600, y: 260, provenance: "manual", description: "Checks that every required document type is present and legible before the case enters operations." });
+  const list = addNode(P, f1, { name: "Client reviews document checklist with examples", type: "activity", actor: "Client", system: "Application form", x: 315, y: 200, provenance: "manual", description: "Shown at application and in the request email." });
+  const pre = addNode(P, f1, { name: "Automated completeness pre-check on upload", type: "activity", actor: "Client", system: "Upload portal", x: 525, y: 200, provenance: "manual", description: "Checks that every required document type is present and legible before the case enters operations." });
   const sub = byName(m1, "Submit documents"), chk = byName(m1, "Check documents"), req = byName(m1, "Send document request"), chase = byName(m1, "Chase for missing documents"), dec = byName(m1, "Documents complete and valid?");
   // rewire: request -> checklist -> submit -> pre-check -> check
   const edges = loadMap(f1)!.edges;
@@ -273,7 +273,7 @@ async function buildFutures(P: string, iid: string, mapId: string, res: Analysis
   // ---- Proposal 2: shared status board
   const f2 = cloneAsFuture(P, mapId, "Shared status board proposal");
   const m2 = loadMap(f2)!;
-  const board = addNode(P, f2, { name: "Update shared case status", type: "activity", actor: "Operations", system: "Status board", x: 720, y: 260, description: "Every document and case status is visible to all teams and the client." });
+  const board = addNode(P, f2, { name: "Update shared case status", type: "activity", actor: "Operations", system: "Status board", x: 735, y: 200, description: "Every document and case status is visible to all teams and the client." });
   const chk2 = byName(m2, "Check documents");
   addEdge(P, f2, chk2.stable_id, board.stable_id);
   updateNode(P, f2, byName(m2, "Chase for missing documents").stable_id, { actor: "Operations", name: "Chase for missing documents (from status board)" });
