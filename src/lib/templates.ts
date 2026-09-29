@@ -19,7 +19,7 @@ export type DocCtx = {
   concepts: { id: string; title: string; description: string; intervention_type: string; tradeoffs: string; status: string }[];
   assumptions: { id: string; statement: string; category: string; importance: string; support: string; status: string }[];
   decisions: { id: string; statement: string; type: string; rationale: string; date: string }[];
-  sources: { id: string; title: string; type: string; content: string }[];
+  sources: { id: string; title: string; type: string; content: string; participant?: string; segment?: string }[];
   done: { type: string; title: string; sections?: Sections }[];
 };
 export type Generated = { sections: Sections; uncertainties: string[]; notes: string[] };
@@ -299,6 +299,70 @@ const test_plan = (c: DocCtx): Generated => {
   };
 };
 
+// ---- voice of the customer: sorts what people actually said into needs, pains, workarounds and praise. Quotes are verbatim; nothing is paraphrased or invented.
+const VOC_KINDS: [string, RegExp][] = [
+  ["Need", /\b(wish|want(ed)? to|need(s|ed)?|would love|would like|hope|should be able|if only|ideally|looking for)\b/i],
+  ["Workaround", /\b(so i |i just|ended up|end up|instead|work ?around|spreadsheet|i (call|email|text|ask|chase)|manually|copy(ing)? and paste)\b/i],
+  ["Pain", /\b(frustrat|annoy|confus|slow|wait(ed|ing)?|stuck|can'?t|cannot|couldn'?t|hard|difficult|waste|again and again|error|fail|broken|lost|wrong|no idea|unclear|worried|afraid|stress|took (days|weeks|forever))/i],
+  ["Praise", /\b(love|great|easy|easier|helpful|works well|happy|nice|fast|clear|smooth|enjoy)\b/i],
+];
+const STOP = new Set("about after again also because been before being could does done each even ever from have having into just like made make many more most much never only other over really said same should since some still such than that their them then there these they thing things think this those through very want were what when where which while will with would your youre dont didnt cant wasnt isnt them then than".split(" "));
+const voc = (c: DocCtx): Generated => {
+  type Row = { kind: string; text: string; sid: string; title: string; who: string };
+  const rows: Row[] = [];
+  const perSource: { title: string; type: string; who: string; seg: string; n: number }[] = [];
+  for (const src of c.sources) {
+    let n = 0;
+    for (const raw of src.content.split(/\n+|(?<=[.!?])\s+/)) {
+      let line = raw.trim().replace(/^[-*•>]\s*/, "");
+      if (/^(interviewer|moderator|q|researcher)\b\s*[:\-]/i.test(line) || /:$/.test(line)) continue;
+      line = line.replace(/^(p\d+|participant\s*\d*|[A-Z][a-z]+)\s*:\s*/, "");
+      if (line.length < 25 || line.length > 300) continue;
+      const kind = VOC_KINDS.find(([, re]) => re.test(line))?.[0];
+      if (!kind) continue;
+      rows.push({ kind, text: line, sid: src.id, title: src.title, who: src.participant || src.title }); n++;
+    }
+    perSource.push({ title: src.title, type: src.type, who: src.participant || "", seg: src.segment || "", n });
+  }
+  const voices = new Set(c.sources.map((x) => x.participant || x.id)).size;
+  const count = (k: string) => rows.filter((r) => r.kind === k).length;
+  const order = ["Pain", "Need", "Workaround", "Praise"];
+  const listed = order.flatMap((k) => rows.filter((r) => r.kind === k).slice(0, 12));
+  const words = new Map<string, { n: number; who: Set<string>; sample: Row }>();
+  for (const r of rows) for (const w of new Set(r.text.toLowerCase().match(/[a-z]{5,}/g) ?? [])) {
+    if (STOP.has(w)) continue;
+    const e = words.get(w) ?? { n: 0, who: new Set(), sample: r }; e.n++; e.who.add(r.who); words.set(w, e);
+  }
+  const recurring = [...words.entries()].filter(([, e]) => e.n >= 2 && e.who.size >= 2).sort((a, b) => b[1].who.size - a[1].who.size || b[1].n - a[1].n).slice(0, 10);
+  const pains = rows.filter((r) => r.kind === "Pain").slice(0, 3);
+  const segs = new Set(c.sources.map((x) => x.segment).filter(Boolean));
+  const gaps = [
+    !c.sources.length && "No customer material is selected. Add interviews, tickets, reviews or survey comments as evidence, then select them for this piece of work.",
+    c.sources.length > 0 && voices < 5 && `Only ${voices} distinct voice${voices === 1 ? "" : "s"} so far. Patterns from fewer than about five people are hunches, not findings.`,
+    c.sources.length > 0 && segs.size === 0 && "No segments are recorded on your sources, so differences between kinds of customer cannot be seen. Tag participants when you add evidence.",
+    ans(c, "who") && `You said you most need to hear from ${strip(ans(c, "who"))}. Check that every voice above actually belongs to that group.`,
+    "Whom have we not heard from — people who left, never signed up, or work around the product?",
+    "Where do the sources disagree with each other? This tool does not look for contradictions in demo mode; read for them.",
+  ].filter(Boolean) as string[];
+  return {
+    sections: {
+      heard: { columns: ["Source", "Kind", "Participant", "Segment", "Passages sorted"], rows: perSource.map((x) => [x.title, x.type, x.who, x.seg, String(x.n)]) },
+      balance: c.sources.length ? `${voices} distinct voice${voices === 1 ? "" : "s"} across ${c.sources.length} source${c.sources.length === 1 ? "" : "s"}. Passages that sound like pains: ${count("Pain")}; needs: ${count("Need")}; workarounds: ${count("Workaround")}; praise: ${count("Praise")}. This is a count of sentences that contain cue words, not a sentiment score.` : "",
+      voices: { columns: ["What they said", "Sorted as", "From"], rows: listed.map((r) => [`“${r.text}”`, r.kind, r.title]) },
+      recurring: { columns: ["Recurring word", "Mentions", "Different voices", "Example"], rows: recurring.map(([w, e]) => [w, String(e.n), String(e.who.size), `“${e.sample.text.slice(0, 140)}”`]) },
+      themes: [],
+      gaps,
+      followups: [
+        ...pains.map((r) => `You heard “${r.text.slice(0, 110)}” — how often does this happen, and what did they do next?`),
+        "For the pain that recurs most: what were they trying to get done, and what did it cost them?",
+        "Who would we ask next to disprove what we think we heard?",
+      ],
+    },
+    uncertainties: ["Passages are sorted by cue words, so some will be mis-sorted and many relevant ones will be missed. Read the sources; treat this as an index, not an analysis.", "Recurring words show what comes up, not why it matters. Write the themes yourself, or turn strong ones into findings tied to the exact quotes."],
+    notes: c.sources.length ? [] : ["No sources were selected, so nothing could be sorted."],
+  };
+};
+
 // ---------------- templates ----------------
 const T = (x: Template) => x;
 const AUD: Question = { key: "audience", label: "Who do you most need to hear from or design for?", kind: "text", placeholder: "e.g. small-business clients going through onboarding", why: "Shapes who to recruit and how questions are worded" };
@@ -344,6 +408,21 @@ export const TEMPLATES: Record<string, Template> = {
       { key: "gaps", title: "What we still need to find out", kind: "list", help: "" },
     ],
     prefill: () => ({}), generate: market_analysis,
+  }),
+  voc: T({
+    type: "voc", label: "Voice of the customer", usesRecords: true, usesSources: "core",
+    intro: "What customers actually said, kept in their own words. Sorted into pains, needs, workarounds and praise, with the quotes attached so you can check them.",
+    intake: [{ key: "who", label: "Whose voice matters most here?", kind: "text", placeholder: "e.g. new clients in their first month", why: "Used to flag gaps in who you have heard from" }],
+    sections: [
+      { key: "heard", title: "Who we heard from", kind: "table", help: "", columns: ["Source", "Kind", "Participant", "Segment", "Passages sorted"] },
+      { key: "balance", title: "What the mix looks like", kind: "text", help: "" },
+      { key: "voices", title: "In their words", kind: "table", help: "", columns: ["What they said", "Sorted as", "From"] },
+      { key: "recurring", title: "What keeps coming up", kind: "table", help: "", columns: ["Recurring word", "Mentions", "Different voices", "Example"] },
+      { key: "themes", title: "Themes (yours to write)", kind: "list", help: "Write each theme as a sentence about the customer, then make it a finding with the quotes attached." },
+      { key: "gaps", title: "Who and what we are missing", kind: "list", help: "" },
+      { key: "followups", title: "Questions for the next conversation", kind: "list", help: "" },
+    ],
+    prefill: (c) => ({ who: c.topic.affected || c.product.target_users }), generate: voc,
   }),
   competitor_scan: T({
     type: "competitor_scan", label: "Competitor scan", usesRecords: false, usesSources: "optional",

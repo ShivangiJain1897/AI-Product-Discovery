@@ -15,7 +15,7 @@ test.describe.serial("idea → choose several things → work over time", () => 
     await expect(page.getByText("5 selected")).toBeVisible();
     await page.getByRole("checkbox", { name: /Assumption map/ }).click();      // add one more by hand
     await page.getByRole("checkbox", { name: /Assumption map/ }).click();      // and remove it again
-    await page.getByRole("checkbox", { name: /User journey map/ }).click();    // deselect a suggested one
+    await page.getByRole("checkbox", { name: /Voice of the customer/ }).click();    // deselect a suggested one
     await expect(page.getByText("4 selected")).toBeVisible();
     // readiness is shown without blocking anything
     await expect(page.getByText("Better later").first()).toBeVisible();

@@ -43,7 +43,7 @@ export function buildDocCtx(productId: string, a: AnalysisRow): DocCtx {
   const concepts = use ? all<any>(`SELECT id, title, description, intervention_type, tradeoffs, status FROM solution_concepts WHERE product_id=? AND ${scope} AND deleted_at IS NULL`, ...p) : [];
   const assumptions = use ? all<any>(`SELECT id, statement, category, importance, support, status FROM assumptions WHERE product_id=? AND ${scope} AND deleted_at IS NULL`, ...p) : [];
   const decisions = use ? all<any>(`SELECT id, statement, decision_type type, rationale, decided_on date FROM decisions WHERE product_id=? AND ${scope} AND deleted_at IS NULL AND status='active' ORDER BY decided_on DESC`, ...p) : [];
-  const sources = analysisSourceIds(a).map((id) => get<any>("SELECT id, title, source_type type, content FROM sources WHERE id=? AND deleted_at IS NULL AND content_kind='text'", id)).filter(Boolean);
+  const sources = analysisSourceIds(a).map((id) => get<any>("SELECT id, title, source_type type, content, participant, segment FROM sources WHERE id=? AND deleted_at IS NULL AND content_kind='text'", id)).filter(Boolean);
   const done = all<AnalysisRow>(`SELECT * FROM analyses WHERE product_id=? AND deleted_at IS NULL AND id<>? ${ini ? "AND initiative_id=?" : "AND 0"}`, ...(ini ? [productId, a.id, ini.id] : [productId, a.id]))
     .map((x) => ({ type: x.type, title: x.title, sections: TEMPLATES[x.type] ? readDocData(x).sections : undefined }));
   const text = ini?.topic_text || ini?.question || a.question || "";

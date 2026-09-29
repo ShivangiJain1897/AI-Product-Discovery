@@ -376,7 +376,7 @@ function checkExperimentRules(cur: any, d: A) {
 async function runAnalysisCmd(productId: string, id: string, a: A) {
   const row = an.getAnalysis(productId, id);
   switch (row.type) {
-    case "research_plan": case "questionnaire": case "market_analysis": case "competitor_scan": case "rca": case "journey_map":
+    case "research_plan": case "questionnaire": case "voc": case "market_analysis": case "competitor_scan": case "rca": case "journey_map":
     case "solution_design": case "requirements": case "prd": case "test_plan": { const r = await docs.generateDoc(productId, id, { answers: a.answers, useRecords: a.useRecords }); return { runId: r.runId, seq: r.seq }; }
     case "research_synthesis": case "custom": case "process_mapping": {
       const ids = an.analysisSourceIds(row);

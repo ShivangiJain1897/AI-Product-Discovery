@@ -155,3 +155,27 @@ describe("document workbench", () => {
     expect(run.detail.notes.join()).toMatch(/1 citation/); expect(run.summary.find((s: any) => s.label === "Produced by").value).toBe("Live model");
   });
 });
+
+describe("voice of the customer", () => {
+  const ctx = (sources: any[]) => ({ topic: { type: "problem", text: "x", question: "x", affected: "", outcome: "", decision: "", constraints: "" }, product: { name: "P", description: "", target_users: "", objectives: "", context: "" }, answers: {}, findings: [], opportunities: [], concepts: [], assumptions: [], decisions: [], sources, done: [] }) as any;
+  it("sorts passages by what customers said, quoting them verbatim and counting distinct voices", () => {
+    const a = "Interviewer: How was signup?\nP1: I was so frustrated waiting for approval again.\nI wish I could see the status of my application.\nSo I just email them every day.";
+    const b = "I love how easy the dashboard is.\nThe approval took weeks and nobody told me why.";
+    const g = TEMPLATES.voc.generate(ctx([{ id: "s1", title: "Interview A", type: "interview", content: a, participant: "P1", segment: "New" }, { id: "s2", title: "Interview B", type: "interview", content: b, participant: "P2", segment: "New" }]));
+    const rows = (g.sections.voices as TableValue).rows;
+    const kinds = Object.fromEntries(rows.map((r) => [r[0].replace(/[“”]/g, ""), r[1]]));
+    expect(kinds["I wish I could see the status of my application."]).toBe("Need");
+    expect(kinds["So I just email them every day."]).toBe("Workaround");
+    expect(kinds["I love how easy the dashboard is."]).toBe("Praise");
+    for (const r of rows) expect(a + "\n" + b).toContain(r[0].replace(/[“”]/g, ""));                 // nothing invented
+    expect(rows.some((r) => /How was signup/.test(r[0]))).toBe(false);                               // interviewer lines are not customer voice
+    expect(g.sections.balance).toMatch(/2 distinct voices/);
+    expect(((g.sections.recurring as TableValue).rows.map((r) => r[0]))).toContain("approval");
+  });
+  it("with no material it says so instead of producing content", () => {
+    const g = TEMPLATES.voc.generate(ctx([]));
+    expect((g.sections.voices as TableValue).rows.length).toBe(0);
+    expect((g.sections.gaps as string[])[0]).toMatch(/No customer material/);
+    expect(readiness("voc", { sources: 0, csv: 0, findings: 0, opportunities: 0, concepts: 0, assumptions: 0 }).state).toBe("needs");
+  });
+});

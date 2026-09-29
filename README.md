@@ -21,7 +21,7 @@ Production: `npm run build && npm start`.
 ### Tests
 
 ```bash
-npm test            # 50 unit/integration tests (calculations, boundaries, proposals, staleness, maps, briefs, workbenches)
+npm test            # 52 unit/integration tests (calculations, boundaries, proposals, staleness, maps, briefs, workbenches)
 npm run test:e2e    # Playwright journeys; builds the app and runs it on :3200 with a throwaway database
 npm run typecheck
 ```
@@ -42,7 +42,7 @@ Either way, a proposal is a **preview**. Every quote and record ID in it is re-v
 1. **Start with a sentence.** A product name is optional: if you don't give one, Clarity names it “Untitled product” and you can rename it any time (click the title). Each product is its own workspace; nothing mixes between products.
 2. **Add a topic** — an **idea, problem, requirement or question**, in a sentence (or paste a brief).
 3. **Choose what to do** from the catalog — as many as you like:
-   - *Understand:* user research plan · questionnaire / interview guide · synthesize research · market analysis · competitor scan
+   - *Understand:* user research plan · questionnaire / interview guide · **voice of the customer** (sorts what customers said into pains, needs, workarounds and praise with verbatim quotes, counts distinct voices, flags who you haven't heard from; live AI can go deeper) · synthesize research · market analysis · competitor scan
    - *Diagnose:* root-cause analysis · process mining (event-log CSV) · process map · frame the problem
    - *Design:* user journey map (a boxes-and-arrows diagram: add, rename, reorder and remove stages, rows and notes) · solution design · requirements & user stories · **PRD**
    - *Prioritise & validate:* prioritise opportunities · assumption map · test plan

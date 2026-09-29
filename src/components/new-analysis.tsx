@@ -29,7 +29,7 @@ export function NewAnalysis({ pid, initiatives, sources, csvSources, defaultInit
   const [ini, setIni] = useState(defaultInitiative ?? "");
   const [sel, setSel] = useState<string[]>([]);
   const [csv, setCsv] = useState(csvSources[0]?.id ?? "");
-  const needs = ["research_synthesis", "process_mapping", "custom", "market_analysis", "competitor_scan", "rca", "journey_map"].includes(type);
+  const needs = ["research_synthesis", "voc", "process_mapping", "custom", "market_analysis", "competitor_scan", "rca", "journey_map"].includes(type);
   const close = () => { setOpen(false); setError(null); if (sp.get("new")) router.replace(path); };
   async function go(e: React.FormEvent) {
     e.preventDefault();

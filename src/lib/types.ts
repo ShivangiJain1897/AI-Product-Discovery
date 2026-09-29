@@ -49,6 +49,7 @@ export const ANALYSIS_TYPES: Record<string, { label: string; purpose: string; ne
   questionnaire: { label: "Questionnaire / interview guide", purpose: "Neutral questions for interviews or a survey", needsSources: false },
   market_analysis: { label: "Market analysis", purpose: "Segments, trends and gaps from sources you provide", needsSources: false },
   competitor_scan: { label: "Competitor scan", purpose: "Compare alternatives side by side", needsSources: false },
+  voc: { label: "Voice of the customer", purpose: "Customer pains, needs and workarounds in their own words", needsSources: true },
   rca: { label: "Root-cause analysis", purpose: "5 whys, fishbone and testable causes", needsSources: false },
   journey_map: { label: "User journey map", purpose: "Stages, feelings, pain points and opportunities", needsSources: false },
   solution_design: { label: "Solution design", purpose: "Options, trade-offs and a recommended direction", needsSources: false },

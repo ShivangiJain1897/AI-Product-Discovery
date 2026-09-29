@@ -141,4 +141,22 @@ test.describe.serial("demo examples, products, analysis, process (Slices 3–5)"
     await page.goto("/");
     await expect(page.getByText(/Resume recent work/)).toBeVisible();
   });
+
+  test("voice of the customer: customer passages sorted, quoted verbatim", async ({ page }) => {
+    await page.goto("/");
+    await page.getByRole("link", { name: "Client Onboarding Service" }).first().click();
+    await page.getByRole("link", { name: "Topics", exact: true }).first().click();
+    await page.locator("#main").getByRole("link").filter({ hasText: /onboard/i }).first().click();
+    await page.getByRole("button", { name: "Add work" }).first().click();
+    await page.getByRole("checkbox", { name: /Voice of the customer/ }).click();
+    await page.getByRole("button", { name: /Add to plan/ }).click();
+    await page.locator("#main").getByRole("link", { name: /^Voice of the customer/ }).click();
+    await page.waitForLoadState("networkidle");
+    await page.getByRole("checkbox", { name: /Interview — New client A/ }).click(); await page.waitForLoadState("networkidle");
+    await page.getByRole("checkbox", { name: /Interview — New client B/ }).click(); await page.waitForLoadState("networkidle");
+    await page.getByRole("button", { name: "Generate draft" }).click();
+    await expect(page.getByRole("heading", { name: "In their words" })).toBeVisible();
+    await expect(page.getByText(/not a sentiment score/)).toBeVisible();
+    await expect(page.getByRole("cell", { name: /^“/ }).first()).toBeVisible();
+  });
 });

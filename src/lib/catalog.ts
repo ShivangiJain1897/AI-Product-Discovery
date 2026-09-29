@@ -24,6 +24,7 @@ export type CatalogItem = {
 export const CATALOG: CatalogItem[] = [
   { key: "research_plan", label: "User research plan", group: "understand", icon: "compass", doc: true, suggestedFor: ["idea", "problem", "requirement", "question"], produces: "Objectives, research questions and methods", needs: "Nothing to start" },
   { key: "questionnaire", label: "Questionnaire / interview guide", group: "understand", icon: "list", doc: true, suggestedFor: ["idea", "problem", "question"], produces: "Neutral questions for interviews or a survey", needs: "Nothing to start" },
+  { key: "voc", label: "Voice of the customer", group: "understand", icon: "users", doc: true, suggestedFor: ["idea", "problem", "requirement", "question"], produces: "Customer pains, needs and workarounds in their own words", needs: "Interviews, tickets, reviews or survey comments" },
   { key: "research_synthesis", label: "Synthesize research", group: "understand", icon: "layers", doc: false, suggestedFor: ["problem", "question"], produces: "Themes and findings, tied to exact quotes", needs: "Interview notes, tickets or feedback" },
   { key: "market_analysis", label: "Market analysis", group: "understand", icon: "chart", doc: true, suggestedFor: ["idea"], produces: "Segments, trends and gaps from sources you provide", needs: "Sources help; none are invented" },
   { key: "competitor_scan", label: "Competitor scan", group: "understand", icon: "compare", doc: true, suggestedFor: ["idea"], produces: "A side-by-side table and differentiators", needs: "Competitor names; sources help" },
@@ -47,6 +48,7 @@ export type Readiness = { state: "ready" | "better" | "needs"; note: string };
 export function readiness(key: string, k: Knowledge): Readiness {
   switch (key) {
     case "research_synthesis": return k.sources - k.csv > 0 ? { state: "ready", note: `${k.sources - k.csv} source(s) available` } : { state: "needs", note: "Needs notes, transcripts or feedback — you can add them next" };
+    case "voc": return k.sources - k.csv > 0 ? { state: "ready", note: `${k.sources - k.csv} source(s) available` } : { state: "needs", note: "Needs customer material — you can add it next" };
     case "event_log": return k.csv > 0 ? { state: "ready", note: `${k.csv} CSV available` } : { state: "needs", note: "Needs an event-log CSV — you can add it next" };
     case "opportunity_analysis": return k.opportunities > 0 ? { state: "ready", note: `${k.opportunities} opportunit${k.opportunities === 1 ? "y" : "ies"}` } : { state: "needs", note: "Needs opportunities first" };
     case "assumption_analysis": return k.assumptions > 0 ? { state: "ready", note: `${k.assumptions} assumption(s)` } : { state: "needs", note: "Needs assumptions first" };
@@ -60,8 +62,9 @@ export function readiness(key: string, k: Knowledge): Readiness {
 
 /** Follow-on suggestions shown when a piece of work is done. */
 export const NEXT: Record<string, string[]> = {
-  research_plan: ["questionnaire", "research_synthesis"],
-  questionnaire: ["research_synthesis"],
+  research_plan: ["questionnaire", "voc"],
+  voc: ["research_synthesis", "journey_map", "rca"],
+  questionnaire: ["voc", "research_synthesis"],
   research_synthesis: ["rca", "journey_map", "opportunity_analysis"],
   market_analysis: ["competitor_scan", "solution_design"],
   competitor_scan: ["solution_design", "prd"],
