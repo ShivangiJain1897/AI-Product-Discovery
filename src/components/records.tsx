@@ -34,7 +34,7 @@ export function AddEvidence({ pid, iid, initiatives, label = "Add evidence", pri
   async function submit(e: React.FormEvent) {
     e.preventDefault();
     const r = await run<{ id: string }>("source.create", { productId: pid, initiativeId: link || undefined, title: f.title, sourceType: f.sourceType, date: f.date || null, participant: f.participant, segment: f.segment, tags: f.tags.split(",").map((t) => t.trim()).filter(Boolean), content: f.content, filename: f.filename || null }, { refresh: false });
-    if (r.ok) { close(); setF({ title: "", sourceType: "interview", date: "", participant: "", segment: "", tags: "", content: "", filename: "" });
+    if (r.ok) { setOpen(false); setF({ title: "", sourceType: "interview", date: "", participant: "", segment: "", tags: "", content: "", filename: "" });
       router.push(showIssue ? `/p/${pid}/eventlog/${r.data.id}${link ? `?i=${link}` : ""}` : `/p/${pid}/sources/${r.data.id}${link ? `?i=${link}` : ""}`); router.refresh(); }
   }
   return (<>

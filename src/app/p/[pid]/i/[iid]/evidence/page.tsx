@@ -27,7 +27,7 @@ export default async function Evidence({ params, searchParams }: { params: Promi
         <div className="mb-1 flex items-end justify-between gap-3"><div><h2 className="text-[17px] font-semibold">Evidence</h2><p className="text-[13.5px] text-muted">What do I have? Originals are kept exactly as imported. Supported: pasted text, .txt, .md, .csv.</p></div><AddEvidence pid={pid} iid={iid} primary /></div>
         {tabs}
         {sources.length === 0 ? (
-          <Empty title="No evidence yet" action={<AddEvidence pid={pid} iid={iid} primary label="Paste or upload your first source" />}>Interview notes, support tickets, a process document or an event-log CSV all work. Rough is fine. What is missing is usually more informative than what is polished.</Empty>
+          <Empty title="No evidence yet" action={<Link className="btn btn-primary" href={`${base}?add=1`}>Paste or upload your first source</Link>}>Interview notes, support tickets, a process document or an event-log CSV all work. Rough is fine. What is missing is usually more informative than what is polished.</Empty>
         ) : <EvidenceBoard pid={pid} iid={iid} sources={sources as any} unlinked={unlinked as any} pending={pending.filter((p) => ["synthesis", "process_draft"].includes(p.kind))} question={ini.question} />}
       </div>
     );

@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useId, useRef, type ReactNode } from "react";
+import { cloneElement, isValidElement, useEffect, useId, useRef, type ReactElement, type ReactNode } from "react";
 import { useSaveState } from "@/lib/client";
 
 export function SaveIndicator() {
@@ -29,7 +29,7 @@ export function Modal({ open, onClose, title, children, wide }: { open: boolean;
     if (!open && d.open) d.close();
   }, [open]);
   return (
-    <dialog ref={ref} aria-labelledby={id} onClose={onClose} onClick={(e) => { if (e.target === ref.current) onClose(); }}
+    <dialog ref={ref} aria-labelledby={id} onClose={() => { if (open) onClose(); }} onClick={(e) => { if (e.target === ref.current) onClose(); }}
       className={`m-auto w-[calc(100%-2rem)] ${wide ? "max-w-3xl" : "max-w-xl"} rounded-xl border border-line bg-surface p-0 text-ink shadow-2xl backdrop:bg-black/30`}>
       {open && (
         <div className="max-h-[85vh] overflow-auto p-5">
@@ -45,10 +45,19 @@ export function Modal({ open, onClose, title, children, wide }: { open: boolean;
 }
 
 export function Field({ label, hint, children, htmlFor }: { label: string; hint?: string; children: ReactNode; htmlFor?: string }) {
+  // Always associate the label with its control, even when the caller forgot an id.
+  const auto = useId();
+  let id = htmlFor;
+  let control = children;
+  if (!id && isValidElement(children)) {
+    const el = children as ReactElement<{ id?: string }>;
+    id = el.props.id ?? auto;
+    if (!el.props.id && typeof el.type === "string") control = cloneElement(el, { id });
+  }
   return (
     <div className="mb-3">
-      <label className="label" htmlFor={htmlFor}>{label}</label>
-      {children}
+      <label className="label" htmlFor={id}>{label}</label>
+      {control}
       {hint && <p className="mt-1 text-[12px] text-muted">{hint}</p>}
     </div>
   );
