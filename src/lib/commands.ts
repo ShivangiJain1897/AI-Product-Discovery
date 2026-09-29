@@ -294,6 +294,8 @@ const H: Record<string, (a: A) => any | Promise<any>> = {
   "brief.markReviewed": (a) => { const p = pid(a); brief.markReviewed(p, a.initiativeId, a.key); return {}; },
   "brief.draft": (a) => ({ text: brief.draftNarrative(pid(a), a.initiativeId, a.key) }),
 
+  "demo.load": async () => { const { loadDemos } = await import("./seed"); return loadDemos(); },
+
   // ---------- trash ----------
   "trash.restore": (a) => { const p = pid(a); if (a.type === "source") restore("source", p, a.id); else if (a.type === "analysis") restore("analysis", p, a.id); else if (a.type === "process_map") restore("process_map", p, a.id); else restore(a.type, p, a.id); return {}; },
 };

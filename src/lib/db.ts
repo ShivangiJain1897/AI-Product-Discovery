@@ -35,11 +35,13 @@ export function closeDb() {
   g.__clarityDb = undefined;
 }
 
+// node:sqlite returns null-prototype rows; copy them so they can cross the server/client boundary.
 export function all<T = Record<string, any>>(sql: string, ...params: unknown[]): T[] {
-  return db().prepare(sql).all(...params) as T[];
+  return (db().prepare(sql).all(...params) as object[]).map((r) => ({ ...r })) as T[];
 }
 export function get<T = Record<string, any>>(sql: string, ...params: unknown[]): T | undefined {
-  return db().prepare(sql).get(...params) as T | undefined;
+  const r = db().prepare(sql).get(...params) as object | undefined;
+  return r ? ({ ...r } as T) : undefined;
 }
 export function run(sql: string, ...params: unknown[]) {
   return db().prepare(sql).run(...params);
