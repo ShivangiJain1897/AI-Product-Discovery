@@ -29,6 +29,7 @@ test.describe.serial("idea → choose several things → work over time", () => 
   test("adaptive questions, a first draft, and edits that are never overwritten", async ({ page }) => {
     await page.goto(topicUrl);
     await page.getByRole("link", { name: /^Competitor scan/ }).click();
+    await page.waitForLoadState("networkidle");
     await page.getByLabel(/Which competitors or alternatives/).fill("Acme, Globex");
     await page.getByRole("button", { name: "Generate draft" }).click();
     await expect(page.getByText("Starter draft from your records").first()).toBeVisible();
@@ -52,6 +53,7 @@ test.describe.serial("idea → choose several things → work over time", () => 
     // the questionnaire asks only what it does not know, and "I don't know" is accepted
     await page.goto(topicUrl);
     await page.getByRole("link", { name: /^Questionnaire/ }).click();
+    await page.waitForLoadState("networkidle");
     await expect(page.getByText(/Who do you most need to hear from/)).toBeVisible();
     await page.getByRole("button", { name: "I don’t know" }).first().click();
     await page.getByRole("radio", { name: "Survey" }).click();
@@ -69,6 +71,7 @@ test.describe.serial("idea → choose several things → work over time", () => 
     await page.getByRole("button", { name: /Add to plan \(2\)/ }).click();
     await expect(page.getByRole("link", { name: /^User journey map/ })).toBeVisible();
     await page.getByRole("link", { name: /^PRD/ }).click();
+    await page.waitForLoadState("networkidle");
     await expect(page.getByText("Nothing to ask. This is assembled from your records.")).toBeVisible();
     await page.getByRole("button", { name: "Generate draft" }).click();
     await expect(page.getByText(/No findings exist yet/)).toBeVisible();          // honest about thin evidence
