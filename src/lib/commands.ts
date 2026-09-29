@@ -17,6 +17,7 @@ import { traceDecision, getInitiative, getProduct } from "./queries";
 import { parseCsv, guessMapping, validate, DEFAULT_OPTIONS, type Mapping, type Options } from "./eventlog";
 import type { Kind } from "./ai/schemas";
 import { ITEM_SCHEMAS } from "./ai/schemas";
+import { entityHref } from "./routes";
 
 type A = Record<string, any>;
 const req = (v: unknown, msg: string) => { if (v === undefined || v === null || (typeof v === "string" && !v.trim())) throw new DomainError(msg); return v as any; };
@@ -285,7 +286,12 @@ const H: Record<string, (a: A) => any | Promise<any>> = {
     const r = await ai.generateProposal(productId, { kind: a.kind, scope: a.scope ?? { sourceIds: [] }, analysisId: a.analysisId });
     return { id: r.id };
   },
-  "ai.accept": (a) => ai.acceptItem(pid(a), a.proposalId, a.index ?? 0, a.overrides ?? {}, a.mergeIntoId),
+  "ai.accept": (a) => {
+    const p = pid(a);
+    const r = ai.acceptItem(p, a.proposalId, a.index ?? 0, a.overrides ?? {}, a.mergeIntoId);
+    const ini = get<any>("SELECT initiative_id FROM ai_proposals WHERE id=?", a.proposalId)?.initiative_id;
+    return { ...r, href: entityHref(p, r.entityType, r.entityId, ini) };
+  },
   "ai.dismissItem": (a) => { ai.dismissItem(pid(a), a.proposalId, a.index); return {}; },
   "ai.dismissProposal": (a) => { ai.dismissProposal(pid(a), a.proposalId); return {}; },
 

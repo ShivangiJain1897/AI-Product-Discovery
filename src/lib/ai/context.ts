@@ -19,6 +19,8 @@ export function buildContext(productId: string, scope: Scope): Ctx {
   const sources = ids.map((id) => get<any>("SELECT * FROM sources WHERE id=? AND deleted_at IS NULL", id)).filter(Boolean).map((s) => ({
     id: s.id, title: s.title, type: s.source_type, participant: s.participant, segment: s.segment, date: s.source_date, content: s.content, kind: s.content_kind, version: s.version,
   })) as SrcCtx[];
+  const focus = scope.extra?.focus as { sourceId: string; start: number; end: number } | undefined;
+  if (focus) for (const s of sources) if (s.id === focus.sourceId) s.content = s.content.slice(focus.start, focus.end);
   const findings = scope.includeProductKnowledge
     ? all<any>("SELECT id, statement, segment, origin FROM findings WHERE product_id=? AND deleted_at IS NULL AND status='accepted' LIMIT 40", productId)
         .map((f) => ({ id: f.id, statement: f.statement, segment: f.segment, origin: f.origin, strength: findingStrength(f.id).level }))
