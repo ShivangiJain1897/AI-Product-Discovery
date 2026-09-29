@@ -28,3 +28,29 @@ export function RestoreButton({ pid, type, id }: { pid: string; type: string; id
   const { run, pending } = useAction();
   return <button className="btn btn-sm" disabled={pending} onClick={() => run("trash.restore", { productId: pid, type, id })}>Restore</button>;
 }
+
+/** Click-to-rename product title. Auto-named products get a gentle nudge. */
+export function ProductTitle({ pid, name, badges }: { pid: string; name: string; badges?: React.ReactNode }) {
+  const { run, pending, error } = useAction();
+  const [edit, setEdit] = useState(false); const [v, setV] = useState(name);
+  const auto = /^Untitled product( \d+)?$/.test(name);
+  return (
+    <div>
+      {edit ? (
+        <form className="flex flex-wrap items-center gap-2" onSubmit={async (e) => { e.preventDefault(); const r = await run("product.update", { id: pid, name: v }); if (r.ok) setEdit(false); }}>
+          <label className="sr-only" htmlFor="pt">Product name</label>
+          <input id="pt" autoFocus className="input !w-72 !text-[20px] font-semibold" value={v} onChange={(e) => setV(e.target.value)} required />
+          <button className="btn btn-primary" disabled={pending}>Save</button><button type="button" className="btn" onClick={() => { setEdit(false); setV(name); }}>Cancel</button>
+        </form>
+      ) : (
+        <div className="flex flex-wrap items-center gap-2">
+          <h1 className="text-[24px] font-semibold leading-tight">{name}</h1>
+          <button className="btn btn-quiet btn-sm" onClick={() => setEdit(true)} aria-label="Rename product">✎ Rename</button>
+          {badges}
+        </div>
+      )}
+      {auto && !edit && <p className="mt-1 text-[12.5px] text-muted">This product was named automatically. <button className="underline" onClick={() => setEdit(true)}>Give it a real name</button> whenever you like.</p>}
+      <ErrorText message={error} />
+    </div>
+  );
+}

@@ -21,14 +21,14 @@ test.describe.serial("idea → choose several things → work over time", () => 
     await expect(page.getByText("Better later").first()).toBeVisible();
     await page.getByRole("button", { name: /Plan my work \(4\)/ }).click();
     await expect(page.getByRole("heading", { name: "Your work" })).toBeVisible();
-    for (const t of ["User research plan", "Questionnaire / interview guide", "Market analysis", "Competitor scan"]) await expect(page.getByRole("link", { name: new RegExp("^" + t) })).toBeVisible();
+    for (const t of ["User research plan", "Questionnaire / interview guide", "Market analysis", "Competitor scan"]) await expect(page.locator("#main").getByRole("link", { name: new RegExp("^" + t) })).toBeVisible();
     await expect(page.getByText("Not started").first()).toBeVisible();
     topicUrl = new URL(page.url()).pathname;
   });
 
   test("adaptive questions, a first draft, and edits that are never overwritten", async ({ page }) => {
     await page.goto(topicUrl);
-    await page.getByRole("link", { name: /^Competitor scan/ }).click();
+    await page.locator("#main").getByRole("link", { name: /^Competitor scan/ }).click();
     await page.waitForLoadState("networkidle");
     await page.getByLabel(/Which competitors or alternatives/).fill("Acme, Globex");
     await page.getByRole("button", { name: "Generate draft" }).click();
@@ -52,7 +52,7 @@ test.describe.serial("idea → choose several things → work over time", () => 
     await expect(page.getByText("Local support in every time zone")).toBeVisible();
     // the questionnaire asks only what it does not know, and "I don't know" is accepted
     await page.goto(topicUrl);
-    await page.getByRole("link", { name: /^Questionnaire/ }).click();
+    await page.locator("#main").getByRole("link", { name: /^Questionnaire/ }).click();
     await page.waitForLoadState("networkidle");
     await expect(page.getByText(/Who do you most need to hear from/)).toBeVisible();
     await page.getByRole("button", { name: "I don’t know" }).first().click();
@@ -69,8 +69,8 @@ test.describe.serial("idea → choose several things → work over time", () => 
     await page.getByRole("checkbox", { name: /User journey map/ }).click();
     await page.getByRole("checkbox", { name: /PRD/ }).click();
     await page.getByRole("button", { name: /Add to plan \(2\)/ }).click();
-    await expect(page.getByRole("link", { name: /^User journey map/ })).toBeVisible();
-    await page.getByRole("link", { name: /^PRD/ }).click();
+    await expect(page.locator("#main").getByRole("link", { name: /^User journey map/ })).toBeVisible();
+    await page.locator("#main").getByRole("link", { name: /^PRD/ }).click();
     await page.waitForLoadState("networkidle");
     await expect(page.getByText("Nothing to ask. This is assembled from your records.")).toBeVisible();
     await page.getByRole("button", { name: "Generate draft" }).click();
@@ -83,7 +83,7 @@ test.describe.serial("idea → choose several things → work over time", () => 
     await page.getByRole("button", { name: "Add work" }).first().click();
     await page.getByRole("checkbox", { name: /Process mining/ }).click();
     await page.getByRole("button", { name: /Add to plan/ }).click();
-    await page.getByRole("link", { name: /^Process mining/ }).click();
+    await page.locator("#main").getByRole("link", { name: /^Process mining/ }).click();
     await expect(page.getByRole("heading", { name: "Choose the event log to mine" })).toBeVisible();
     await expect(page.getByText("No CSV in this product yet.")).toBeVisible();
   });

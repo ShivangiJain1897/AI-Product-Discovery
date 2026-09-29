@@ -106,7 +106,7 @@ export function TopBar({ product, initiatives, aiMode }: TopProps) {
   else if (section === "knowledge") action = { label: "Add evidence", href: `${base}/knowledge?add=1` };
   void sp;
   return (
-    <header className="no-print sticky top-0 z-20 flex items-center gap-3 border-b border-line bg-paper/95 px-5 py-2.5 backdrop-blur">
+    <header className="no-print sticky top-0 z-20 flex items-center gap-3 border-b border-line bg-paper/95 py-2.5 pl-24 pr-5 backdrop-blur md:pl-5">
       <nav aria-label="Breadcrumb" className="min-w-0 flex-1">
         <ol className="flex min-w-0 items-center gap-1.5 text-[13.5px] text-muted">
           {crumbs.map((c, i) => (

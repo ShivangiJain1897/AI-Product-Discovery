@@ -4,6 +4,7 @@ import { useState, type ReactNode } from "react";
 import { rpc, useAction } from "@/lib/client";
 import { Icon } from "./icon";
 import { ErrorText } from "./ui";
+import { JourneyDiagram } from "./journey-diagram";
 import { docToMarkdown, isEmptyValue, type SectionDef, type SectionValue, type TableValue, type TemplateLite } from "@/lib/templates";
 
 type Ref = Record<string, { label: string; href: string }>;
@@ -152,7 +153,13 @@ export function DocWorkbench({ pid, a, tpl, sections, prov, pending, intake, ref
 
       {generated || Object.keys(pending).length ? (
         <div className="space-y-4" aria-label="Document">
-          {tpl.sections.map((s) => <SectionCard key={s.key + JSON.stringify(sections[s.key]).length + (pending[s.key] ?? "")} pid={pid} id={a.id} def={s} value={sections[s.key]} prov={prov[s.key]} pending={pending[s.key]} refs={refs} />)}
+          {tpl.sections.map((s) => tpl.type === "journey_map" && s.key === "map" && !isEmptyValue(sections.map) && typeof sections.map === "object" && !Array.isArray(sections.map) ? (
+            <section key="map" className="card p-4 fade-in" aria-labelledby="sec-map">
+              <div className="mb-2 flex flex-wrap items-center gap-2"><h3 id="sec-map" className="text-[15px] font-semibold">{s.title}</h3>{prov.map && <span className={`rounded-full px-2 py-0.5 text-[11px] font-medium ${PROV[prov.map]?.cls ?? ""}`}>{PROV[prov.map]?.label}</span>}</div>
+              {pending.map && <p role="status" className="mb-2 rounded-lg border border-warn/30 bg-warn-soft px-3 py-2 text-[13px] text-warn">A newer draft exists for this diagram; your edits were kept. Regenerate to review it.</p>}
+              <JourneyDiagram pid={pid} id={a.id} value={sections.map as TableValue} pains={Array.isArray(sections.pains) ? sections.pains : []} refLabel={(t) => t.replace(TOKEN, "").trim()} render={(t) => <Rich text={t} refs={refs} />} />
+            </section>
+          ) : <SectionCard key={s.key + JSON.stringify(sections[s.key]).length + (pending[s.key] ?? "")} pid={pid} id={a.id} def={s} value={sections[s.key]} prov={prov[s.key]} pending={pending[s.key]} refs={refs} />)}
         </div>
       ) : <div className="rounded-2xl border border-dashed border-line-strong bg-surface px-6 py-10 text-center"><p className="text-[15px] font-semibold">No draft yet</p><p className="mx-auto mt-1 max-w-md text-[13.5px] text-muted">Answer what you like above, then generate a first draft. Every section stays editable, and you can regenerate at any time.</p></div>}
 

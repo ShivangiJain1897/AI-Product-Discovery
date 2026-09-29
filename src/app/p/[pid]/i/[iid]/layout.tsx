@@ -24,7 +24,7 @@ export default async function InitiativeLayout({ children, params }: { children:
           </div>
           <StatusActions pid={pid} iid={iid} status={i.status} />
         </div>
-        <nav aria-label="Discovery sections" className="-mb-px mt-3 flex gap-1 overflow-x-auto">
+        <nav aria-label="Topic sections (compact)" className="-mb-px mt-3 flex gap-1 overflow-x-auto md:hidden">
           {[["Work", ""], ["Evidence", "/evidence"], ["Explore", "/explore"], ["Validate", "/validate"], ["Decide", "/decide"], ["Brief", "/brief"]].map(([l, s]) => (
             <NavLink key={l} href={b + s} exact={s === ""} className="!rounded-b-none !rounded-t-md border-b-2 !px-3.5 !py-2 [&[aria-current=page]]:border-accent [&:not([aria-current=page])]:border-transparent">{l}</NavLink>
           ))}

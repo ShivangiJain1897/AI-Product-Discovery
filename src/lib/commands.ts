@@ -44,7 +44,14 @@ function snapshotDecision(productId: string, id: string) {
 const H: Record<string, (a: A) => any | Promise<any>> = {
   // ---------- products ----------
   "product.create": (a) => {
-    const name = String(req(a.name, "Give the product a name.")).trim();
+    // A name is optional when the caller says so (auto): Clarity assigns "Untitled product", "Untitled product 2", … and the user can rename it any time.
+    let name = String(a.name ?? "").trim();
+    if (!name && a.auto) {
+      const taken = new Set(all<any>("SELECT name FROM products").map((r) => r.name));
+      name = "Untitled product";
+      for (let n = 2; taken.has(name); n++) name = `Untitled product ${n}`;
+    }
+    if (!name) throw new DomainError("Give the product a name.");
     const id = newId("prd"); const ts = now();
     sql("INSERT INTO products (id, name, description, last_opened_at, created_at, updated_at) VALUES (?,?,?,?,?,?)", id, name, a.description ?? "", ts, ts, ts);
     logActivity(id, { kind: "created", entityType: "product", entityId: id, summary: `Created product ${name}` });

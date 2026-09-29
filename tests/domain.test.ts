@@ -30,6 +30,11 @@ describe("products and boundaries", () => {
     freshDb();
     const a = await cmd("product.create", { name: "A" }), b = await cmd("product.create", { name: "B" });
     expect((await fails("product.create", { name: "  " })).message).toMatch(/name/i);
+    // a blank name is only accepted when the app is asked to choose one, and never collides
+    const u1 = await cmd("product.create", { name: "", auto: true }), u2 = await cmd("product.create", { auto: true });
+    const names = (await import("@/lib/db")).all<any>("SELECT id, name FROM products");
+    expect(names.find((r) => r.id === u1.id)!.name).toBe("Untitled product");
+    expect(names.find((r) => r.id === u2.id)!.name).toBe("Untitled product 2");
     const sa = await src(a.id, undefined), sb = await src(b.id, undefined, { title: "Other" });
     expect(searchProduct(a.id, "checklist").map((h) => h.id)).toEqual([sa]);
     expect(searchProduct(b.id, "checklist").map((h) => h.id)).toEqual([sb]);

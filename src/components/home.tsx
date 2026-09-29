@@ -22,8 +22,8 @@ export function StartBox({ products }: { products: P[] }) {
     if (!q.trim()) { setError("Say a little about what you’re working on — a sentence is enough."); ref.current?.focus(); return; }
     let productId = pid;
     if (pid === "__new") {
-      if (!newName.trim()) { setError("Name the product this is about. A name is all you need."); return; }
-      const r = await run<{ id: string }>("product.create", { name: newName }, { refresh: false });
+      // No name? Clarity assigns one ("Untitled product") and it can be renamed later.
+      const r = await run<{ id: string }>("product.create", { name: newName, auto: true }, { refresh: false });
       if (!r.ok) return;
       productId = r.data.id;
     }
@@ -31,7 +31,7 @@ export function StartBox({ products }: { products: P[] }) {
   }
 
   return (
-    <section aria-labelledby="start-h" className="mx-auto max-w-3xl text-center fade-in">
+    <section id="start" aria-labelledby="start-h" className="mx-auto max-w-3xl text-center fade-in">
       <h1 id="start-h" className="font-serif text-[38px] font-semibold leading-[1.1] tracking-tight">What are you working on?</h1>
       <p className="mx-auto mt-3 max-w-xl text-[15.5px] text-muted">An idea, a problem, a requirement or a question. Start with a sentence — then choose what to do with it: research, analysis, design, a PRD.</p>
       <div className="mt-7 text-left">
@@ -53,7 +53,7 @@ export function StartBox({ products }: { products: P[] }) {
               {products.map((p) => <option key={p.id} value={p.id}>In {p.name}</option>)}
               <option value="__new">＋ In a new product…</option>
             </select>
-            {pid === "__new" && <><label className="sr-only" htmlFor="start-n">Product name</label><input id="start-n" className="input !w-52 !py-1.5 text-[13px]" value={newName} onChange={(e) => setNewName(e.target.value)} placeholder="Product name" /></>}
+            {pid === "__new" && <><label className="sr-only" htmlFor="start-n">Product name</label><input id="start-n" className="input !w-52 !py-1.5 text-[13px]" value={newName} onChange={(e) => setNewName(e.target.value)} placeholder="Name it now, or later (optional)" /></>}
             <button type="button" disabled={pending} onClick={go} className="btn btn-primary ml-auto !px-5 !py-2">Continue<Icon name="arrow" size={15} /></button>
           </div>
         </div>
@@ -141,8 +141,8 @@ export function AddProduct({ open, onClose }: { open: boolean; onClose: () => vo
   const [name, setName] = useState(""); const [desc, setDesc] = useState("");
   return (
     <Modal open={open} onClose={onClose} title="Add a product">
-      <form onSubmit={async (e) => { e.preventDefault(); const r = await run<{ id: string }>("product.create", { name, description: desc }, { refresh: false }); if (r.ok) { onClose(); router.push(`/p/${r.data.id}`); } }}>
-        <Field label="Product name" htmlFor="np-n" hint="Only the name is required. You can add context as you go."><input id="np-n" autoFocus className="input" value={name} onChange={(e) => setName(e.target.value)} required /></Field>
+      <form onSubmit={async (e) => { e.preventDefault(); const r = await run<{ id: string }>("product.create", { name, description: desc, auto: true }, { refresh: false }); if (r.ok) { onClose(); router.push(`/p/${r.data.id}`); } }}>
+        <Field label="Product name (optional)" htmlFor="np-n" hint="Leave it blank and Clarity will call it “Untitled product”. You can rename it any time."><input id="np-n" autoFocus className="input" value={name} onChange={(e) => setName(e.target.value)} placeholder="Untitled product" /></Field>
         <Field label="Short description (optional)" htmlFor="np-d"><input id="np-d" className="input" value={desc} onChange={(e) => setDesc(e.target.value)} /></Field>
         <ErrorText message={error} />
         <div className="flex justify-end gap-2"><button type="button" className="btn" onClick={onClose}>Cancel</button><button className="btn btn-primary" disabled={pending}>Add product</button></div>

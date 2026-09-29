@@ -5,6 +5,7 @@ import { StartBox, ProductGrid, LoadDemoButton } from "@/components/home";
 import { ago } from "@/lib/format";
 import { aiMode } from "@/lib/ai/live";
 import { SaveIndicator } from "@/components/ui";
+import { Shell } from "@/components/shell";
 import { demoLoaded } from "@/lib/seed";
 
 export const dynamic = "force-dynamic";
@@ -29,10 +30,10 @@ export default function Home() {
   });
   const hasDemo = demoLoaded();
   return (
+    <Shell>
     <div className="hero min-h-screen">
-      <header className="flex items-center justify-between px-6 py-4">
-        <span className="flex items-center gap-2 font-serif text-[20px] font-semibold tracking-tight text-accent-strong"><span aria-hidden className="inline-block h-5 w-5 rounded-full border-[5px] border-accent" />Clarity</span>
-        <div className="flex items-center gap-3"><span className={`badge ${aiMode() === "live" ? "badge-accent" : "badge-warn"}`}>AI: {aiMode() === "live" ? "live model" : "demo mode — no API key"}</span><SaveIndicator /></div>
+      <header className="flex items-center justify-end gap-3 px-6 py-4 pl-24 md:pl-6">
+        <span className={`badge ${aiMode() === "live" ? "badge-accent" : "badge-warn"}`}>AI: {aiMode() === "live" ? "live model" : "demo mode — no API key"}</span><SaveIndicator />
       </header>
       <main id="main" className="px-6 pb-16 pt-6">
         <Suspense><StartBox products={live.map((p) => ({ id: p.id, name: p.name }))} /></Suspense>
@@ -62,5 +63,6 @@ export default function Home() {
         {hasDemo && <p className="mx-auto mt-6 max-w-5xl text-[12.5px] text-muted">Products marked <span className="badge badge-warn">Demo</span> contain synthetic data invented for illustration. Nothing in them is real research.</p>}
       </main>
     </div>
+    </Shell>
   );
 }

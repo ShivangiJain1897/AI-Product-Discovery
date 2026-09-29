@@ -39,12 +39,12 @@ Either way, a proposal is a **preview**. Every quote and record ID in it is re-v
 
 ## How it works (the flow)
 
-1. **Add a product** (a name is enough). Each product is its own workspace; nothing mixes between products.
+1. **Start with a sentence.** A product name is optional: if you don't give one, Clarity names it “Untitled product” and you can rename it any time (click the title). Each product is its own workspace; nothing mixes between products.
 2. **Add a topic** — an **idea, problem, requirement or question**, in a sentence (or paste a brief).
 3. **Choose what to do** from the catalog — as many as you like:
    - *Understand:* user research plan · questionnaire / interview guide · synthesize research · market analysis · competitor scan
    - *Diagnose:* root-cause analysis · process mining (event-log CSV) · process map · frame the problem
-   - *Design:* user journey map · solution design · requirements & user stories · **PRD**
+   - *Design:* user journey map (a boxes-and-arrows diagram: add, rename, reorder and remove stages, rows and notes) · solution design · requirements & user stories · **PRD**
    - *Prioritise & validate:* prioritise opportunities · assumption map · test plan
 
    Each option shows what it produces and whether it is **Ready / Better later / Needs input**. Nothing is ever blocked.
@@ -63,6 +63,7 @@ Everything stays connected: evidence, findings, opportunities, concepts, assumpt
 
 ## What’s in the box
 
+- **Left menu everywhere:** products on the home screen; inside a product, its sections, its topics and, for the topic you're in, its work (a drawer on small screens).
 - **My Products** portfolio and **Topics**, **Outputs** (all work across topics, filterable), **Knowledge**, **Experiments**, activity history, product-scoped search, recently deleted.
 - **Evidence:** paste, `.txt`, `.md`, `.csv`; reader with highlights, observations, finding links, versioning; CSV row references.
 - **Deeper views inside a topic:** Evidence · Explore (opportunities, tree, prioritisation, process lens) · Validate · Decide · Brief.
@@ -100,4 +101,4 @@ Design choices worth knowing:
 
 ## Known limitations / not built
 
-See the end-of-build report in the repository’s final commit message and `AGENTS.md`. In short: single-user only (no auth), journey analysis and a standalone “current-state analysis” type are not exposed (process mapping covers current state), hypotheses are edited inside experiments rather than as separate objects, live AI mode is implemented and tested with a mocked transport but has not been run against the real API in this environment.
+See the end-of-build report in the repository’s final commit message and `AGENTS.md`. In short: single-user only (no auth), a standalone “current-state analysis” type are not exposed (process mapping covers current state), hypotheses are edited inside experiments rather than as separate objects, live AI mode is implemented and tested with a mocked transport but has not been run against the real API in this environment.

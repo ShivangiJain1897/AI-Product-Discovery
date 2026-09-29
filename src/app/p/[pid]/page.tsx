@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { all } from "@/lib/db";
 import { getProduct, listInitiatives, listFindings, listDecisions, attention, activityList, listAnalyses, listAssumptions } from "@/lib/queries";
-import { ProductContext } from "@/components/product";
+import { ProductContext, ProductTitle } from "@/components/product";
 import { ActivityFeed, Section, StrengthBadge } from "@/components/bits";
 import { StatusActions } from "@/components/initiative";
 import { entityHref } from "@/lib/routes";
@@ -25,8 +25,8 @@ export default async function ProductOverview({ params }: { params: Promise<{ pi
   const unresolved = att.experimentsToInterpret.length + att.findingsToReview.length + att.decisionsToReview.length + att.outdatedAnalyses.length + untested.length;
   return (
     <div className="mx-auto max-w-6xl space-y-6 px-6 py-5">
-      <div><div className="flex flex-wrap items-center gap-2"><h1 className="text-[22px] font-semibold">{p.name}</h1><span className="badge capitalize">{p.lifecycle}</span>{p.is_demo ? <span className="badge badge-warn">Demo · synthetic data</span> : null}{p.archived_at ? <span className="badge">Archived</span> : null}</div>
-        {p.description && <p className="text-[14px] text-muted">{p.description}</p>}</div>
+      <div><ProductTitle pid={pid} name={p.name} badges={<><span className="badge capitalize">{p.lifecycle}</span>{p.is_demo ? <span className="badge badge-warn">Demo · synthetic data</span> : null}{p.archived_at ? <span className="badge">Archived</span> : null}</>} />
+        {p.description && <p className="mt-1 text-[14px] text-muted">{p.description}</p>}</div>
 
       <Section id="resume-h" title="Resume recent work" hint="Pick up where you left off.">
         <div className="grid gap-3 md:grid-cols-3">
